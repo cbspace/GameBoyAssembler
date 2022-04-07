@@ -1,26 +1,33 @@
 #!/usr/bin/env python3
 
 # Gameboy Assembler Program
+# Gameboy Instructions
 
 from gbsem_constants import *
 from gbsem_common import *
 
-# section, used to indicate address
-def asm_section(params):
-	section_addr_str = params[1]
-	if section_addr_str[0:4] == 'home':
-		s_addr = processNumber(section_addr_str[4:].strip('[]'),16)
-		if s_addr >= get_address():
-			for i in range(get_address(), s_addr):
-				writeIns([0xff])
-		else:
-			printError("Section address must occur after current address")
+# Instruction with r parameter (r=LIST_PARAM)
+# and r - and r with A
+# cp r - Compare r with A
+def ins_generic_r(base_opcode,ins_name,params):
+	if len(params) == 1:
+		r = params[0]
+		if r in LIST_PARAM:
+			writeIns([base_opcode + LIST_PARAM.index(r)])
+		else: #number
+			n_value = processN(r,8)
+			if n_value == -1:
+				printError("Immediate value is invalid")
+			else:
+				writeIns([base_opcode + 0x46,n_value])
+	else:
+		printError("Invalid use of instruction - " + ins_name + " r")
 	return
 
- # add n + carry flag to A - A , n
+ # adc - add n + carry flag to A
 def ins_adc(params):
 	base_opcode = 0x88
-	if params[0] =='a':
+	if len(params) == 2 and params[0] =='a':
 		n = params[1]
 		if n in LIST_PARAM:
 			writeIns([base_opcode + LIST_PARAM.index(n)])
@@ -34,7 +41,7 @@ def ins_adc(params):
 		printError("Invalid use of instruction - ADC a,n")
 	return
 
-# add n to A - A , n
+# add n to A
 def ins_add(params):
 	if params[0] =='a':
 		base_opcode = 0x80
@@ -65,6 +72,36 @@ def ins_add(params):
 		printError("Invalid use of instruction - ADD a,n")
 	return
 
+ # Test bit b in register r - bit b,r
+def ins_bit(params):
+	base_opcode = 0x40
+	if len(params) == 2 and len(params[0]) == 1 and params[0].isdigit():
+		b = int(params[0])
+		r = params[1]
+		if b <= 7:
+			if r in LIST_PARAM:
+				writeIns([0xcb,base_opcode + 0x08 * b + LIST_PARAM.index(r)])
+		else:
+			printError("Invalid bit number, must be 0 - 7")
+	else:
+		printError("Invalid use of instruction - bit b,r")
+	return
+
+# call
+def ins_call(params):
+	if len(params) == 1:  # call nn - Call subroutine at address nn
+		nn = processAddress(params[0],'call')
+		byte1 = 0xcd
+	elif len(params) == 2: # call cc,nn conditional call to address nn (cc=nz,z,nc,c)
+		cc = params[0]
+		if cc in LIST_CONDITIONS:
+			nn = processAddress(params[1],'call',cc)
+			byte1 = LIST_CALL_OPCODE[LIST_CONDITIONS.index(cc)]
+		else:
+			printError("Call condition is not valid (cc=nz,z,nc,c)")
+	write_nn(byte1, nn)
+	return
+
 # jump
 def ins_jp(params):
 	if len(params) == 1:
@@ -81,21 +118,6 @@ def ins_jp(params):
 			write_nn(byte1, nn)
 		else:
 			printError("Jump condition is not valid (cc=nz,z,nc,c)")
-	return
-
-# call
-def ins_call(params):
-	if len(params) == 1:  # call nn - Call subroutine at address nn
-		nn = processAddress(params[0],'call')
-		byte1 = 0xcd
-	elif len(params) == 2: # call cc,nn conditional call to address nn (cc=nz,z,nc,c)
-		cc = params[0]
-		if cc in LIST_CONDITIONS:
-			nn = processAddress(params[1],'call',cc)
-			byte1 = LIST_CALL_OPCODE[LIST_CONDITIONS.index(cc)]
-		else:
-			printError("Call condition is not valid (cc=nz,z,nc,c)")
-	write_nn(byte1, nn)
 	return
 
 # Write ROM data for instruction with nn parameter

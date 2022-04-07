@@ -3,12 +3,13 @@
 # Gameboy Assembler Program
 
 # Constants
-CONST_VERSION = 0.21
+CONST_VERSION = 0.22
 
 import sys
 
 from gbsem_constants import *
 from gbsem_common import *
+from asm_instructions import *
 from gb_instructions import *
 
 # --------------------------------- Program Start ----------------------------------
@@ -95,28 +96,36 @@ else:
 		
 		# Process the instruction
 		if instruction == 'db' or instruction == '.db': # db n - Define byte - Writes single byte to hex file
-			# Loop through params as multiple words can be used on a single line
-			for b in params:
-				byte1 = processN(b,8)
-				writeIns([byte1])
+			asm_db(params)
 		elif instruction == 'dw': # dw nnnn - Define word - Writes 2 bytes to hex file
-			# Loop through params as multiple words can be used on a single line
-			for w in params:
-				byte1 = processN(w,16) >> 8
-				byte2 = processN(w,16) & 0xFF
-				writeIns([byte1, byte2])
+			asm_dw(params)
 		elif instruction == 'include': # include file, currently not supported
-			file_name = params[0].strip('""')
-			print("\t** WARNING on line " + str(line_number) + ": Include not supported yet - \"" + file_name + "\" not added **")
+			asm_include(params)
 		elif instruction == 'section': # section, used to indicate address
 			asm_section(params)
 		elif instruction == 'nop': # No op
-			byte1 = 0x00
-			writeIns([byte1])
-		elif instruction == 'adc': # add n + carry flag to A - A , n
+			writeIns([0x00])
+		elif instruction == 'adc': # add n + carry flag to A
 			ins_adc(params)
-		elif instruction == 'add': # add n to A - A , n
+		elif instruction == 'add': # add n to A
 			ins_add(params)
+		elif instruction == 'and': # and n with A
+			ins_generic_r(0xa0,'and',params)
+		elif instruction == 'bit': # Test bit b in register r - bit b,r
+			ins_bit(params)
+		elif instruction == 'call': # call
+			ins_call(params)
+		elif instruction == 'ccf': # Complement Carry Flag
+			writeIns([0x3f])
+		elif instruction == 'cpl': # Complement A register
+			writeIns([0x2f])
+		elif instruction == 'cp': # cp r - Compare r with A
+			ins_generic_r(0xb8,'cp',params)
+		elif instruction == 'daa': # Decimal adjust register A
+			writeIns([0x27])
+		elif instruction == 'dec': # Decrement register r
+			ins_dec(params)
+
 		elif instruction == 'ret': # ret - Return from subroutine - 0xC9
 			byte1 = 0xc9
 			writeIns([byte1])
@@ -125,8 +134,6 @@ else:
 			writeIns([byte1])
 		elif instruction == 'jp': #jump
 			ins_jp(params)
-		elif instruction == 'call': # call
-			ins_call(params)
 		else:
 			printError("Invalid instruction \"" + instruction + "\"")
 
