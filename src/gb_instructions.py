@@ -102,6 +102,11 @@ def ins_call(params):
 	write_nn(byte1, nn)
 	return
 
+# Decrement register r
+def ins_dec(params):
+
+	return
+
 # jump
 def ins_jp(params):
 	if len(params) == 1:
