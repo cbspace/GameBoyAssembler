@@ -2,6 +2,8 @@
 
 # Gameboy Assembler Program
 
+from gbsem_constants import *
+
 # --------------------------------- Variables ----------------------------------
 
 # Define an array for the ROM
@@ -224,12 +226,12 @@ def fillJumps():
 				if ins_param =='':
 					byte1 = 0xc3
 				else:		# conditional jump
-					byte1 = LIST_JP_OPCODE[LIST_CONDITIONS.index(cc)]
+					byte1 = LIST_JP_OPCODE[LIST_CONDITIONS.index(ins_param)]
 			elif ins_type == 'call':	# call nn - CD nn
 				if ins_param =='':
 					byte1 = 0xcd
 				else:		# conditional call
-					byte1 = LIST_CALL_OPCODE[LIST_CONDITIONS.index(cc)]
+					byte1 = LIST_CALL_OPCODE[LIST_CONDITIONS.index(ins_param)]
 			else:
 				printError('Invalid instruction found in jump table \'' + ins_type + '\'')
 

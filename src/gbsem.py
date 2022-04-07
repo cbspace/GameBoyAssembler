@@ -3,7 +3,7 @@
 # Gameboy Assembler Program
 
 # Constants
-CONST_VERSION = 0.2
+CONST_VERSION = 0.21
 
 import sys
 
@@ -124,29 +124,7 @@ else:
 			byte1 = 0xd9
 			writeIns([byte1])
 		elif instruction == 'jp': #jump
-			if len(params) == 1:
-				if params[0] == '(hl)':  # jp (HL) - Jump to address in HL register
-					byte1 = 0xe9
-					writeIns[byte1]
-					continue  # we are done here, continue loop to skip 'nn' processing below
-				else:    # jp nn - Jump to address nn
-					nn = processAddress(params[0],'jp')
-					byte1 = 0xc3
-			elif len(params) == 2: # jp cc,nn conditional jump to address nn (cc=nz,z,nc,c)
-				cc = params[0]
-				if cc in LIST_CONDITIONS:
-					nn = processAddress(params[1],'jp',cc)
-					byte1 = LIST_JP_OPCODE[LIST_CONDITIONS.index(cc)]
-				else:
-					printError("Jump condition is not valid (cc=nz,z,nc,c)")
-			if nn == -1: # Error
-				printError("Invalid address or label")
-			elif nn == 0: # Label is found so leave instruction blank
-				writeIns([0x00, 0x00, 0x00])
-			else:          # Address is found so write the bytes
-				byte3 = nn >> 8
-				byte2 = nn & 0xFF
-				writeIns([byte1, byte2, byte3])
+			ins_jp(params)
 		elif instruction == 'call': # call
 			ins_call(params)
 		else:

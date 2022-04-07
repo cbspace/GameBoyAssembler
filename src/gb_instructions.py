@@ -67,7 +67,20 @@ def ins_add(params):
 
 # jump
 def ins_jp(params):
-
+	if len(params) == 1:
+		if params[0] == '(hl)':  # jp (HL) - Jump to address in HL register
+			writeIns([0xe9])
+		else:    # jp nn - Jump to address nn
+			nn = processAddress(params[0],'jp')
+			write_nn(0xc3, nn)
+	elif len(params) == 2: # jp cc,nn conditional jump to address nn (cc=nz,z,nc,c)
+		cc = params[0]
+		if cc in LIST_CONDITIONS:
+			nn = processAddress(params[1],'jp',cc)
+			byte1 = LIST_JP_OPCODE[LIST_CONDITIONS.index(cc)]
+			write_nn(byte1, nn)
+		else:
+			printError("Jump condition is not valid (cc=nz,z,nc,c)")
 	return
 
 # call
@@ -82,6 +95,13 @@ def ins_call(params):
 			byte1 = LIST_CALL_OPCODE[LIST_CONDITIONS.index(cc)]
 		else:
 			printError("Call condition is not valid (cc=nz,z,nc,c)")
+	write_nn(byte1, nn)
+	return
+
+# Write ROM data for instruction with nn parameter
+# Input: byte1 - the first byte (opcode)
+#           nn - The processed integer
+def write_nn(byte1, nn):
 	if nn == -1: # Error
 		printError("Invalid address or label")
 	elif nn == 0: # Label is found so leave instruction blank
