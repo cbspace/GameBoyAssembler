@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.10
 
 # Gameboy Assembler Program
 
@@ -12,7 +12,7 @@ from gbsem_common import *
 from asm_instructions import *
 from gb_instructions import *
 
-# --------------------------------- Program Start ----------------------------------
+# ------------------------- Program Start -----------------------------
 
 # Display Welcome Message
 print("    Gameboy Assembler V" + str(CONST_VERSION))
@@ -93,49 +93,56 @@ else:
 		# Get rid of any pesky spaces, tabs, etc
 		for i in range(len(params)):
 			params[i] = params[i].strip()
-		
-		# Process the instruction
-		if instruction == 'db' or instruction == '.db': # db n - Define byte - Writes single byte to hex file
-			asm_db(params)
-		elif instruction == 'dw': # dw nnnn - Define word - Writes 2 bytes to hex file
-			asm_dw(params)
-		elif instruction == 'include': # include file, currently not supported
-			asm_include(params)
-		elif instruction == 'section': # section, used to indicate address
-			asm_section(params)
-		elif instruction == 'nop': # No op
-			writeIns([0x00])
-		elif instruction == 'adc': # add n + carry flag to A
-			ins_adc(params)
-		elif instruction == 'add': # add n to A
-			ins_add(params)
-		elif instruction == 'and': # and n with A
-			ins_generic_r(0xa0,'and',params)
-		elif instruction == 'bit': # Test bit b in register r - bit b,r
-			ins_bit(params)
-		elif instruction == 'call': # call
-			ins_call(params)
-		elif instruction == 'ccf': # Complement Carry Flag
-			writeIns([0x3f])
-		elif instruction == 'cpl': # Complement A register
-			writeIns([0x2f])
-		elif instruction == 'cp': # cp r - Compare r with A
-			ins_generic_r(0xb8,'cp',params)
-		elif instruction == 'daa': # Decimal adjust register A
-			writeIns([0x27])
-		elif instruction == 'dec': # Decrement register r
-			ins_dec(params)
 
-		elif instruction == 'ret': # ret - Return from subroutine - 0xC9
-			byte1 = 0xc9
-			writeIns([byte1])
-		elif instruction == 'reti': # ret - Return from interrupt - 0xD9
-			byte1 = 0xd9
-			writeIns([byte1])
-		elif instruction == 'jp': #jump
-			ins_jp(params)
-		else:
-			printError("Invalid instruction \"" + instruction + "\"")
+		# Process the instruction
+		match instruction:
+			case "db": # db n - Define byte - Writes single byte to hex file
+				asm_db(params)
+			case '.db':
+				asm_db(params)
+			case 'dw': # dw nnnn - Define word - Writes 2 bytes to hex file
+				asm_dw(params)
+			case 'include': # include file, currently not supported
+				asm_include(params)
+			case 'section': # section, used to indicate address
+				asm_section(params)
+			case 'nop': # No op
+				writeIns([0x00])
+			case 'adc': # add n + carry flag to A
+				ins_adc(params)
+			case 'add': # add n to A
+				ins_add(params)
+			case 'and': # and n with A
+				ins_generic_r(0xa0,'and',params)
+			case 'bit': # Test bit b in register r - bit b,r
+				ins_bit(params)
+			case 'call': # call
+				ins_call(params)
+			case 'ccf': # Complement Carry Flag
+				writeIns([0x3f])
+			case 'cpl': # Complement A register
+				writeIns([0x2f])
+			case 'cp': # cp r - Compare r with A
+				ins_generic_r(0xb8,'cp',params)
+			case 'daa': # Decimal adjust register A
+				writeIns([0x27])
+			case 'dec': # Decrement register r
+				ins_dec_inc(0x05,0x0b,'dec',params)
+			case 'di': # Disable Interrupts
+				writeIns([0xf3])
+			case 'ei': # Enable Interrupts
+				writeIns([0xfb])
+
+			case 'inc': # Increment register r
+				ins_dec_inc(0x04,0x03,'inc',params)
+			case 'ret': # ret - Return from subroutine - 0xC9
+				writeIns([0xc9])
+			case 'reti': # ret - Return from interrupt - 0xD9
+				writeIns([0xd9])
+			case 'jp': #jump
+				ins_jp(params)
+			case _:
+				printError("Invalid instruction \"" + instruction + "\"")
 
 	# Fill in the jump instructions with associated label addresses
 	fillJumps()

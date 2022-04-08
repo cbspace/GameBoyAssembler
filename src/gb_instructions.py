@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.10
 
 # Gameboy Assembler Program
 # Gameboy Instructions
@@ -24,6 +24,20 @@ def ins_generic_r(base_opcode,ins_name,params):
 		printError("Invalid use of instruction - " + ins_name + " r")
 	return
 
+# Instructions inc r and dec r with r parameter (r=LIST_PARAM)
+# dec r - decrement register r
+# inc r - increment register r
+def ins_generic_decn_incn(base_opcode,ins_name,params):
+	if len(params) == 1:
+		r = params[0]
+		if r in LIST_PARAM:
+			writeIns([base_opcode + 0x08 * LIST_PARAM.index(r)])
+		else:
+			printError("Invalid use of '" + ins_name + " r' - incorrect parameter")
+	else:
+		printError("Invalid use of - " + ins_name + " r - too many parameters")
+	return
+
  # adc - add n + carry flag to A
 def ins_adc(params):
 	base_opcode = 0x88
@@ -43,33 +57,36 @@ def ins_adc(params):
 
 # add n to A
 def ins_add(params):
-	if params[0] =='a':
-		base_opcode = 0x80
-		n = params[1]
-		if n in LIST_PARAM:
-			writeIns([base_opcode + LIST_PARAM.index(n)])
-		else: #number
+	if len(params) == 2:
+		if params[0] =='a':
+			base_opcode = 0x80
+			n = params[1]
+			if n in LIST_PARAM:
+				writeIns([base_opcode + LIST_PARAM.index(n)])
+			else: #number
+				n_value = processN(n,8)
+				if n_value == -1:
+					printError("Immediate value is invalid")
+				else:
+					writeIns([base_opcode + 0x46,n_value])
+		elif params[0] == 'hl':
+			base_opcode = 0x09
+			n = params[1]
+			if n in LIST_PARAM_REG:
+				writeIns([base_opcode + 0x10 * LIST_PARAM_REG.index(n)])
+			else: #error
+				printError("Register '" + params[1] + "' is invalid")
+		elif params[0] == 'sp':
+			n = params[1]
 			n_value = processN(n,8)
 			if n_value == -1:
 				printError("Immediate value is invalid")
 			else:
-				writeIns([base_opcode + 0x46,n_value])
-	elif params[0] == 'hl':
-		base_opcode = 0x09
-		n = params[1]
-		if n in LIST_PARAM_REG:
-			writeIns([base_opcode + 0x10 * LIST_PARAM_REG.index(n)])
-		else: #error
-			printError("Register '" + params[1] + "' is invalid")
-	elif params[0] == 'sp':
-		n = params[1]
-		n_value = processN(n,8)
-		if n_value == -1:
-			printError("Immediate value is invalid")
+				writeIns([0xe8,n_value])
 		else:
-			writeIns([0xe8,n_value])
+			printError("Invalid use of instruction - ADD a,n")
 	else:
-		printError("Invalid use of instruction - ADD a,n")
+		printError("Invalid use of instruction 'add a,n' - only allowed 2 parameters")
 	return
 
  # Test bit b in register r - bit b,r
@@ -102,10 +119,19 @@ def ins_call(params):
 	write_nn(byte1, nn)
 	return
 
-# Decrement register r
-def ins_dec(params):
-
+# Decrement register r or
+# Increment register r
+def ins_dec_inc(base_opcode_r,base_opcode_rr,ins_name,params):
+	if len(params) == 1:
+		r = params[0]
+		if r in LIST_PARAM_REG:
+			writeIns([base_opcode_rr + 0x10 * LIST_PARAM_REG.index(r)])
+		else:
+			ins_generic_decn_incn(base_opcode_r,ins_name,params)
+	else:
+		printError("Invalid use of '"+ ins_name + " r' - too many parameters")
 	return
+
 
 # jump
 def ins_jp(params):

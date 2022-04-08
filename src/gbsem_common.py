@@ -1,10 +1,10 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.10
 
 # Gameboy Assembler Program
 
 from gbsem_constants import *
 
-# --------------------------------- Variables ----------------------------------
+# ---------------------------- Variables ---------------------------
 
 # Define an array for the ROM
 rom = []
@@ -28,10 +28,10 @@ jump_table = []
 # Dictionary used to store assembler constants (equ/= definitions)
 assembler_constants = {}
 
-# ----------------------- Common Functions --------------------------------------
+# ----------------------- Common Functions --------------------------
 
+# Get the current address
 def get_address():
-	global address
 	return address
 
 # Increase line counter
