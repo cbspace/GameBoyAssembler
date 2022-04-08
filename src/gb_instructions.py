@@ -38,6 +38,32 @@ def ins_generic_decn_incn(base_opcode,ins_name,params):
 		printError("Invalid use of - " + ins_name + " r - too many parameters")
 	return
 
+# Load instruction
+# ld (c),a
+# ld (hl+),a
+# ld (hl-),a
+# ld (hld),a
+# ld (hli),a
+# ld (nn),sp
+# ld a,(c)
+# ld a,(hl+)
+# ld a,(hl-)
+# ld a,(hld)
+# ld a,(hli
+# ld a,n
+# ------
+# ld n,a
+# ld n,nn
+# ld nn,n
+# ld r1,r2
+# ld sp,hl
+def ins_ld(params):
+	if len(params) == 2:
+		note="Not done yet"
+	else:
+		printError("Invalid use of instruction 'ld x,x' - only allowed 2 parameters")
+	return
+
  # adc - add n + carry flag to A
 def ins_adc(params):
 	base_opcode = 0x88

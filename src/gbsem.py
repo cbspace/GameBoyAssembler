@@ -3,7 +3,7 @@
 # Gameboy Assembler Program
 
 # Constants
-CONST_VERSION = 0.22
+CONST_VERSION = 0.24
 
 import sys
 
@@ -108,11 +108,11 @@ else:
 				asm_section(params)
 			case 'nop': # No op
 				writeIns([0x00])
-			case 'adc': # add n + carry flag to A
+			case 'adc': # add r + carry flag to A
 				ins_adc(params)
-			case 'add': # add n to A
+			case 'add': # add r to A
 				ins_add(params)
-			case 'and': # and n with A
+			case 'and': # and r with A
 				ins_generic_r(0xa0,'and',params)
 			case 'bit': # Test bit b in register r - bit b,r
 				ins_bit(params)
@@ -132,15 +132,29 @@ else:
 				writeIns([0xf3])
 			case 'ei': # Enable Interrupts
 				writeIns([0xfb])
-
+			case 'halt': # Halt
+				writeIns([0x76])
 			case 'inc': # Increment register r
 				ins_dec_inc(0x04,0x03,'inc',params)
-			case 'ret': # ret - Return from subroutine - 0xC9
-				writeIns([0xc9])
+			case 'jp': # Jump
+				ins_jp(params)
+			case 'ld': # Load
+				ins_ld(params)
+			#case 'ldd': # Load
+			#case 'ldh': # Load
+			#case 'ldi': # Load
+			case 'nop': # No op
+				writeIns([0x00])
+			case 'or': # Or r with A
+				ins_generic_r(0xb0,'or',params)
+			#case 'pop': # Pop from stack
+			#case 'push': # Push to stack
+			#case 'res': # Reset bit b in register r - res b,r
+			#case 'ret': # ret - Return from subroutine - ret or ret cc
+				#writeIns([0xc9]) need to add ret cc
 			case 'reti': # ret - Return from interrupt - 0xD9
 				writeIns([0xd9])
-			case 'jp': #jump
-				ins_jp(params)
+
 			case _:
 				printError("Invalid instruction \"" + instruction + "\"")
 
