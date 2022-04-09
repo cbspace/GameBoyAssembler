@@ -3,14 +3,14 @@
 # Gameboy Assembler Program
 
 # Constants
-CONST_VERSION = 0.25
+CONST_VERSION = 0.26
 
 import sys
 
 from gbsem_constants import *
 from gbsem_common import *
-from asm_instructions import *
-from gb_instructions import *
+from gbsem_asm_ins import *
+from gbsem_gb_ins import *
 
 # ------------------------- Program Start -----------------------------
 

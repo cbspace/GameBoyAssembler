@@ -70,7 +70,6 @@ def checkForConstant(line_data):
 				defineConstant(const_split[0],const_number)
 				return 1
 			else:
-				printError("Invalid constant value")
 				return -1
 		else:
 			printError("Too many parameters for constant definition")
@@ -131,37 +130,35 @@ def labelValid(label_name):
 
 # Input - number(str): String that is a hex, binary or decimal integer
 #       - bits (int): size of integer in bits
+#       - show_invalid_error(boolean): Print error message when True
 # Hex numbers begin with $, binary begins with # and decimal is digits only
 # return value is integer value of input string
 # returns -1 on error
-def processNumber(number,bits):
+def processNumber(number,bits,show_invalid_error=True):
 	if number.isdecimal() == True:                 # Decimal number detected
-		if int(number) < 2**(bits):
-			return int(number)
-		else:
+		n = check_number_size(int(number),bits)
+		if n == -1:
 			printError("Number must not be larger than " + str(bits) + " bits (max " + str(2**(bits)-1) + ")")
-			return -1
-	elif number[0] == '$' or number[-1] == 'h':   # Hex number detected
-		if int(number[1:], 16) < 2**bits:
-			return int(number[1:], 16)
-		else:
-			printError("Number must not be larger than " + str(bits) + " bits (max " + "#%0.2X" % (2**(bits)-1) + ")")
-			return -1
+		return n
+	elif number[0] == '$':                         # Hex number detected
+		n = string_to_number(number[1:],16)
+		if n != -1:
+			n = check_number_size(n,bits)
+			if n == -1:
+				printError("Number must not be larger than " + str(bits) + " bits (max " + "#%0.2X" % (2**(bits)-1) + ")")
+		return n
 	elif number[0] == '#':                         # Binary number detected
 		# replace '.'s with zeros
 		binary_string = number[1:].replace('.','0')
-		try:
-			binary_integer = int(binary_string,2)
-		except:
-			printError("Invalid binary representation (only 1,0 and . allowed)")
-			return -1
-		if binary_integer < 2**bits:
-			return binary_integer
-		else:
-			printError("Number must not be larger than " + str(bits) + " bits")
-			return -1
+		n = string_to_number(binary_string,2)
+		if n != -1:
+			n = check_number_size(n,bits)
+			if n == -1:
+				printError("Number must not be larger than " + str(bits) + " bits")
+		return n
 	else:
-		printError("Invalid integer \'" + number + "\'")
+		if show_invalid_error:
+			printError("Invalid integer \'" + number + "\'")
 		return -1
 
 # Input - n_string(string): Can be either constant name or a number
@@ -170,14 +167,35 @@ def processNumber(number,bits):
 def processN(n_string,bits):
 		# Search constant dictionary for string
 		if n_string in assembler_constants:
-			return assembler_constants.get(n_string)
+			n = check_number_size(assembler_constants.get(n_string),bits)
+			if n == -1:
+				printError("Number must not be larger than " + str(bits) + " bits (max " + str(2**(bits)-1) + ")")
+			return n
 		else:	# No constant found so look for number
-			check_number = processNumber(n_string, bits)
-			if check_number >= 0: # Valid number is found
-				return check_number
-			else: # No valid number found
+			check_number = processNumber(n_string, bits, False)
+			if check_number == -1:
 				printError("Invalid number or constant \'" + n_string + "\'")
-				return -1
+			return check_number
+
+# Input - n(int): Number to test
+#       - bits(int): Int size measured in bits
+# output - The input n if in bouds or -1 if number too large
+def check_number_size(n,bits):
+	if int(n) < 2**(bits):
+		return int(n)
+	else:
+		return -1
+
+# Input - n_string(str): Number to convert
+#       - base(int): Hex(16), decimal(10) or binary(2)
+# output - The input n if valid or -1 if number invalid
+def string_to_number(n_string,base):
+	try:
+		integer = int(n_string,base)
+	except:
+		printError("Invalid number representation")
+		integer = -1
+	return integer
 
 # Check for valid address string or label
 # when a label is found create jump table entry

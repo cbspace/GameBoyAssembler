@@ -15,11 +15,7 @@ def ins_generic_r(base_opcode,ins_name,params):
 		if r in LIST_PARAM:
 			writeIns([base_opcode + LIST_PARAM.index(r)])
 		else: #number
-			n_value = processN(r,8)
-			if n_value == -1:
-				printError("Immediate value is invalid")
-			else:
-				writeIns([base_opcode + 0x46,n_value])
+			write_n(base_opcode + 0x46,r)
 	else:
 		printError("Invalid use of instruction - " + ins_name + " r")
 	return
@@ -92,7 +88,10 @@ def ins_ldh(params):
 
 # ldhl sp,n   - Put sp + n effective address into hl (n=d8) - 0xf8
 def ins_ldhl(params):
-	printError("ldhl not implemented")
+	if len(params) == 2 and params[0] =='sp':
+		write_n(0xf8,params[1])
+	else:
+		printError("Invalid use of instruction 'ldhl sp,n'")
 	return
 
  # adc - add n + carry flag to A
@@ -103,11 +102,7 @@ def ins_adc(params):
 		if n in LIST_PARAM:
 			writeIns([base_opcode + LIST_PARAM.index(n)])
 		else: #number
-			n_value = processN(n,8)
-			if n_value == -1:
-				printError("Immediate value is invalid")
-			else:
-				writeIns([base_opcode + 0x46,n_value])
+			write_n(base_opcode + 0x46,n)
 	else:
 		printError("Invalid use of instruction - ADC a,n")
 	return
@@ -121,11 +116,7 @@ def ins_add(params):
 			if n in LIST_PARAM:
 				writeIns([base_opcode + LIST_PARAM.index(n)])
 			else: #number
-				n_value = processN(n,8)
-				if n_value == -1:
-					printError("Immediate value is invalid")
-				else:
-					writeIns([base_opcode + 0x46,n_value])
+				write_n(base_opcode + 0x46,n)
 		elif params[0] == 'hl':
 			base_opcode = 0x09
 			n = params[1]
@@ -134,12 +125,7 @@ def ins_add(params):
 			else: #error
 				printError("Register '" + params[1] + "' is invalid")
 		elif params[0] == 'sp':
-			n = params[1]
-			n_value = processN(n,8)
-			if n_value == -1:
-				printError("Immediate value is invalid")
-			else:
-				writeIns([0xe8,n_value])
+			write_n(0xe8,params[1])
 		else:
 			printError("Invalid use of instruction - ADD a,n")
 	else:
@@ -220,6 +206,15 @@ def write_nn(byte1, nn):
 		byte3 = nn >> 8
 		byte2 = nn & 0xFF
 		writeIns([byte1, byte2, byte3])
+	return
+
+# Write ROM data for instruction with n parameter
+# Input: byte1 - the first byte (opcode)
+#            n - The processed integer
+def write_n(byte1, n):
+	n_value = processN(n,8)
+	if n_value != -1:
+		writeIns([byte1,n_value])
 	return
 
 # ret or ret cc - Return from subroutine or retun conditional (cc=LIST_CONDITIONS)
