@@ -26,7 +26,7 @@ def asm_db(params):
 		writeIns([byte1])
 	return
 
-# dw nnnn - Define word - Writes 2 bytes to hex file
+# dw nn - Define word - Writes 2 bytes to hex file
 def asm_dw(params):
 	# Loop through params as multiple words can be used on a single line
 	for w in params:
@@ -39,6 +39,5 @@ def asm_dw(params):
 # include file, currently not supported
 def asm_include(params):
 	file_name = params[0].strip('""')
-	#print("\t** WARNING on line " + str(line_number) + ": Include not supported yet - \"" + file_name + "\" not added **")
 	printWarning("Include not supported yet - \"" + file_name + "\" not added",True)
 	return
