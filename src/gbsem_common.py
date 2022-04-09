@@ -140,8 +140,11 @@ def processNumber(number,bits,show_invalid_error=True):
 		if n == -1:
 			printError("Number must not be larger than " + str(bits) + " bits (max " + str(2**(bits)-1) + ")")
 		return n
-	elif number[0] == '$':                         # Hex number detected
-		n = string_to_number(number[1:],16)
+	elif number[0] == '$' or number[-1] == 'h':   # Hex number detected
+		if number[0] == '$':
+			n = string_to_number(number[1:],16)
+		elif number[-1] == 'h':
+			n = string_to_number(number[:-1],16)
 		if n != -1:
 			n = check_number_size(n,bits)
 			if n == -1:

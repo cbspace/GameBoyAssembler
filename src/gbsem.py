@@ -3,7 +3,7 @@
 # Gameboy Assembler Program
 
 # Constants
-CONST_VERSION = 0.26
+CONST_VERSION = 0.27
 
 import sys
 
@@ -102,6 +102,8 @@ else:
 			case '.db':
 				asm_db(params)
 			case 'dw': # dw nnnn - Define word - Writes 2 bytes to hex file
+				asm_dw(params)
+			case '.dw':
 				asm_dw(params)
 			case 'include': # include file, currently not supported
 				asm_include(params)

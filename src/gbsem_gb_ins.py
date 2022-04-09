@@ -66,7 +66,7 @@ def ins_ld(params,ins_name):
 		if match_result != -1: # found a match
 			writeIns([match_result])
 		else: # not found keep processing
-			printError("ld not found")
+			printWarning("ld not found")
 	else:
 		printError("Invalid use of instruction '" + ins_name + "' - only allowed 2 parameters")
 	return
