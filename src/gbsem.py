@@ -3,7 +3,7 @@
 # Gameboy Assembler Program
 
 # Constants
-CONST_VERSION = 0.24
+CONST_VERSION = 0.25
 
 import sys
 
@@ -83,6 +83,7 @@ else:
 		# Find the instruction
 		if space_count == 0:
 			instruction = data
+			params = []
 		elif space_count > 0:
 			first_space_split = data.split(' ',1)
 			instruction = first_space_split[0]	
@@ -139,10 +140,15 @@ else:
 			case 'jp': # Jump
 				ins_jp(params)
 			case 'ld': # Load
-				ins_ld(params)
-			#case 'ldd': # Load
-			#case 'ldh': # Load
-			#case 'ldi': # Load
+				ins_ld(params,'ld')
+			case 'ldd': # Load and decrement
+				ins_ld(params,'ldd')
+			case 'ldh': # Load high
+				ins_ldh(params)
+			case 'ldi': # Load and increment
+				ins_ld(params,'ldi')
+			case 'ldhl': # Put sp + n effective address into hl (n=d8) - 0xf8
+				ins_ldhl(params)
 			case 'nop': # No op
 				writeIns([0x00])
 			case 'or': # Or r with A
@@ -150,13 +156,13 @@ else:
 			#case 'pop': # Pop from stack
 			#case 'push': # Push to stack
 			#case 'res': # Reset bit b in register r - res b,r
-			#case 'ret': # ret - Return from subroutine - ret or ret cc
-				#writeIns([0xc9]) need to add ret cc
+			case 'ret': # ret - Return from subroutine - ret or ret cc
+				ins_ret(params)
 			case 'reti': # ret - Return from interrupt - 0xD9
 				writeIns([0xd9])
 
 			case _:
-				printError("Invalid instruction \"" + instruction + "\"")
+				printError("Invalid instruction '" + instruction + "'")
 
 	# Fill in the jump instructions with associated label addresses
 	fillJumps()

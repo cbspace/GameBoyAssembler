@@ -38,30 +38,61 @@ def ins_generic_decn_incn(base_opcode,ins_name,params):
 		printError("Invalid use of - " + ins_name + " r - too many parameters")
 	return
 
-# Load instruction
-# ld (c),a
-# ld (hl+),a
-# ld (hl-),a
-# ld (hld),a
-# ld (hli),a
-# ld (nn),sp
-# ld a,(c)
-# ld a,(hl+)
-# ld a,(hl-)
-# ld a,(hld)
-# ld a,(hli
-# ld a,n
-# ------
-# ld n,a
-# ld n,nn
-# ld nn,n
-# ld r1,r2
-# ld sp,hl
-def ins_ld(params):
+# Load instructions
+# ------ Simple Loads use list match ------
+# ld (hl-),a  - SAME AS LDD (HL),A - 0x32
+# ld (hld),a  - SAME AS LDD (HL),A - 0x32
+# ldd (hl),a  - Put a into address (hl) and decrement hl - 0x32
+# ld (hl+),a  - SAME AS LDI (HL),A - 0x22
+# ld (hli),a  - SAME AS LDI (HL),A - 0x22
+# ldi (hl),a  - Put a into address (hl) and increment hl - 0x22
+# ld a,(hl-)  - SAME AS LDD A,(HL) - 0x3a
+# ld a,(hld)  - SAME AS LDD A,(HL) - 0x3a
+# ldd a,(hl)  - Put calue at address (hl) into a and decrement hl - 0x3a
+# ld a,(hl+)  - SAME AS LDI (HL),A - 0x2a
+# ld a,(hli)  - SAME AS LDI (HL),A - 0x2a
+# ldi a,(hl)  - Put calue at address (hl) into a and increment hl - 0x2a
+# ld sp,hl    - Put hl into stack pointer - 0xf9
+# ------ Loads using registers and immediates------
+# ld (c),a    - Put A into address $FF00 + reg c - 0xe2
+# ld a,(c)    - Put value at $FF00 + reg c into A - 0xf2
+# ld a,n      - n= abcdehl(bc)(de)(hl)(d16)d8
+# ld n,a      - n= abcdehl(bc)(de)(hl)(d16)
+# ld r1,r2    - r1 and r2 in LIST_PARAM --& (hl),n w n=8bit Immediate
+# ------ 16 Bit Loads ------
+# ld n,nn     - Put nn into n (n=LIST_PARAM_REG_S),(nn=d16)
+# ld nn,n     - nn = bcdehl , n = 8bit Immediate
+# ld hl,sp+n  - SAME AS LDHL SP,N - 0xf8
+# ld (nn),sp  - Put stack pointer at address (nn) nn=d16 - 0x08
+def ins_ld(params,ins_name):
 	if len(params) == 2:
-		note="Not done yet"
+		match_result = ins_ld_match(params,ins_name)
+		if match_result != -1: # found a match
+			writeIns([match_result])
+		else: # not found keep processing
+			printError("ld not found")
 	else:
-		printError("Invalid use of instruction 'ld x,x' - only allowed 2 parameters")
+		printError("Invalid use of instruction '" + ins_name + "' - only allowed 2 parameters")
+	return
+
+# Test for simple ld commands and match to opcode
+# Returns -1 for no match and returns opcode for a match (8bit integer)
+def ins_ld_match(params,ins_name):
+	for i in LIST_LD:
+		if ins_name == i[0][0] and params[0] == i[0][1] and params[1] == i[0][2]:
+			return i[1]
+		else:
+			return -1
+
+# ldh (n),a   - Put a into memory address $FF00 + n (8bit immediate) - 0xe0
+# ldh a,(n)   - Put address $FF00 + n (8bit immediate) into a - 0xf0
+def ins_ldh(params):
+	printError("ldh not implemented")
+	return
+
+# ldhl sp,n   - Put sp + n effective address into hl (n=d8) - 0xf8
+def ins_ldhl(params):
+	printError("ldhl not implemented")
 	return
 
  # adc - add n + carry flag to A
@@ -98,8 +129,8 @@ def ins_add(params):
 		elif params[0] == 'hl':
 			base_opcode = 0x09
 			n = params[1]
-			if n in LIST_PARAM_REG:
-				writeIns([base_opcode + 0x10 * LIST_PARAM_REG.index(n)])
+			if n in LIST_PARAM_REG_S:
+				writeIns([base_opcode + 0x10 * LIST_PARAM_REG_S.index(n)])
 			else: #error
 				printError("Register '" + params[1] + "' is invalid")
 		elif params[0] == 'sp':
@@ -150,8 +181,8 @@ def ins_call(params):
 def ins_dec_inc(base_opcode_r,base_opcode_rr,ins_name,params):
 	if len(params) == 1:
 		r = params[0]
-		if r in LIST_PARAM_REG:
-			writeIns([base_opcode_rr + 0x10 * LIST_PARAM_REG.index(r)])
+		if r in LIST_PARAM_REG_S:
+			writeIns([base_opcode_rr + 0x10 * LIST_PARAM_REG_S.index(r)])
 		else:
 			ins_generic_decn_incn(base_opcode_r,ins_name,params)
 	else:
@@ -189,4 +220,19 @@ def write_nn(byte1, nn):
 		byte3 = nn >> 8
 		byte2 = nn & 0xFF
 		writeIns([byte1, byte2, byte3])
+	return
+
+# ret or ret cc - Return from subroutine or retun conditional (cc=LIST_CONDITIONS)
+def ins_ret(params):
+	if len(params) == 0: # ret unconditional
+		writeIns([0xc9])
+	elif len(params) == 1: # ret conditional (cc=nz,z,nc,c)
+		cc = params[0]
+		if cc in LIST_CONDITIONS:
+			byte1 = 0xc0 + 0x08 * LIST_CONDITIONS.index(cc)
+			writeIns([byte1])
+		else:
+			printError("Ret condition is not valid (cc=nz,z,nc,c)")
+	else:
+		printError("Invalid use of 'ret' - 0 or 1 parameters only")
 	return
