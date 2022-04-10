@@ -92,8 +92,11 @@ else:
 			params = param_string.split(',')
 		
 		# Get rid of any pesky spaces, tabs, etc
+		# and replace [] brackets with ()
 		for i in range(len(params)):
 			params[i] = params[i].strip()
+			params[i] = params[i].replace('[','(')
+			params[i] = params[i].replace(']',')')
 
 		# Process the instruction
 		match instruction:
