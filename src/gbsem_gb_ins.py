@@ -51,11 +51,11 @@ def ins_generic_decn_incn(base_opcode,ins_name,params):
 # ld ($ff00+c),a  - Put A into address $FF00 + reg c - 0xe2
 # ld a,($ff00+c)  - Put value at $FF00 + reg c into A - 0xf2
 # ld sp,hl        - Put hl into stack pointer - 0xf9
+# ld r1,r2        - r1 and r2 in LIST_PARAM
 # ------ Loads using registers and immediates------
 # ld a,n          - n= abcdehl(bc)(de)(hl)(d16)d8
 # ld n,a          - n= abcdehl(bc)(de)(hl)(d16)
-# ld r1,r2        - r1 and r2 in LIST_PARAM --& (hl),n w n=8bit Immediate
-# ------ 16 Bit Loads ------
+# ld r1,r2        - (hl),n w n=8bit Immediate
 # ld n,nn         - Put nn into n (n=LIST_PARAM_REG_S),(nn=d16)
 # ld nn,n         - nn = bcdehl , n = 8bit Immediate
 # ld hl,sp+n      - SAME AS LDHL SP,N - 0xf8
@@ -76,7 +76,7 @@ def ins_ld(params,ins_name):
 					if n[0] == '(' and n[-1] == ')':
 						n = n.strip('()')
 						n_int = processN(n,16)
-						if n != -1:
+						if n_int != -1:
 							write_nn(0xfa,n_int)
 					else: # 8bit immediate
 						write_n(0x3e,n)
@@ -92,6 +92,12 @@ def ins_ld(params,ins_name):
 						write_nn(0xea,n_int)
 				else: # no valid parameter
 					printError("Invalid use of instruction - ld n,a")
+		elif params[0] == '(hl)': # ld (hl),n w n=8bit Immediate
+			write_n(0x36,params[1])
+		elif params[0] in LIST_PARAM_REG_S: # ld n,nn
+			nn_int = processN(params[1],16)
+			if nn_int != -1:
+				write_nn(0x01 + 0x10 * LIST_PARAM_REG_S.index(params[0]),nn_int)
 	else:
 		printError("Invalid use of instruction '" + ins_name + "' - only allowed 2 parameters")
 	return
