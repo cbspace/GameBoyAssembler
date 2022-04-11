@@ -3,7 +3,7 @@
 # Gameboy Assembler Program
 
 # Constants
-CONST_VERSION = 0.28
+CONST_VERSION = 0.29
 
 import sys
 

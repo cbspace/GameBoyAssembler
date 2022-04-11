@@ -80,6 +80,18 @@ def ins_ld(params,ins_name):
 							write_nn(0xfa,n_int)
 					else: # 8bit immediate
 						write_n(0x3e,n)
+		elif params[1] == 'a':
+			n = params[0]
+			if n in LIST_PARAM_LDA:
+				writeIns([LIST_LD_NA_OPCODE[LIST_PARAM_LDA.index(n)]])
+			else: #(nn)
+				if n[0] == '(' and n[-1] == ')':
+					n = n.strip('()')
+					n_int = processN(n,16)
+					if n != -1:
+						write_nn(0xea,n_int)
+				else: # no valid parameter
+					printError("Invalid use of instruction - ld n,a")
 	else:
 		printError("Invalid use of instruction '" + ins_name + "' - only allowed 2 parameters")
 	return
