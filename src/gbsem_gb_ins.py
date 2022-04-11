@@ -98,6 +98,8 @@ def ins_ld(params,ins_name):
 			nn_int = processN(params[1],16)
 			if nn_int != -1:
 				write_nn(0x01 + 0x10 * LIST_PARAM_REG_S.index(params[0]),nn_int)
+		elif params[0] in LIST_PARAM_LDN: # ld nn,n
+			write_n(0x06 + 0x08 * LIST_PARAM_LDN.index(params[0]),params[1])
 	else:
 		printError("Invalid use of instruction '" + ins_name + "' - only allowed 2 parameters")
 	return

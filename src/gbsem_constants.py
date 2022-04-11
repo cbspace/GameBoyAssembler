@@ -17,6 +17,7 @@ LIST_LD_NA_OPCODE = [0x47,0x4f,0x57,0x5f,0x67,0x6f,0x02,0x12,0x77]
 # Registers
 LIST_PARAM = ['b','c','d','e','h','l','(hl)','a']
 LIST_PARAM_LDA = ['b','c','d','e','h','l','(bc)','(de)','(hl)']
+LIST_PARAM_LDN = ['b','c','d','e','h','l']
 LIST_PARAM_REG_I = ['(bc)','(de)','(hl)']
 LIST_PARAM_REG_S = ['bc','de','hl','sp']
 
