@@ -4,8 +4,13 @@
 
 ### Features
 
- * Wide variey of asm sytax accepted
+ * Wide variey of Assembly syntax accepted
  * Descriptive error messages when errors are found
+ 
+### Future Features
+
+ * Support for macros
+ * Listing file generation
 
 ### Requirements
 
@@ -21,6 +26,6 @@
 eg. `./src/gbsem.py ~/gb/mygame.asm ~/gb/rom/mygamerom.gb`
 
 Input file: Gameboy assembly code (usually .asm).  
-Output file: Gameboy rom (.gb)
+Output file: Gameboy ROM (.gb)
 
 If output filename is not specified it will be the input filename with a .gb extension in the same directory as the input.
