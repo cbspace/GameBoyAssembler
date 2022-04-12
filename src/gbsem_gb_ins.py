@@ -312,3 +312,14 @@ def ins_ret(params):
 	else:
 		printError("Invalid use of 'ret' - 0 or 1 parameters only")
 	return
+
+# pop and push to stack
+def ins_stack(base_opcode,ins_name,params):
+	if len(params) == 1:
+		r = params[0]
+		if r in LIST_PARAM_STACK:
+			byte1 = base_opcode + LIST_PARAM_STACK.index(r)
+			writeIns([byte1])
+	else:
+		printError("Invalid use of '"+ ins_name + " r' - expected 1 parameter")
+	return

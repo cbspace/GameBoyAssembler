@@ -20,6 +20,7 @@ LIST_PARAM_LDA = ['b','c','d','e','h','l','(bc)','(de)','(hl)']
 LIST_PARAM_LDN = ['b','c','d','e','h','l']
 LIST_PARAM_REG_I = ['(bc)','(de)','(hl)']
 LIST_PARAM_REG_S = ['bc','de','hl','sp']
+LIST_PARAM_STACK = ['af','bc','de','hl']
 
 # Simple Loads use list match
 LIST_LD = [

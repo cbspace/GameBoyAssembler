@@ -3,7 +3,7 @@
 # Gameboy Assembler Program
 
 # Constants
-CONST_VERSION = 0.32
+CONST_VERSION = 0.33
 
 import sys
 
@@ -158,8 +158,10 @@ else:
 				writeIns([0x00])
 			case 'or': # Or r with A
 				ins_generic_r(0xb0,'or',params)
-			#case 'pop': # Pop from stack
-			#case 'push': # Push to stack
+			case 'pop': # Pop from stack
+				ins_stack(0xc1,'pop',params)
+			case 'push': # Push to stack
+				ins_stack(0xc5,'push',params)
 			#case 'res': # Reset bit b in register r - res b,r
 			case 'ret': # ret - Return from subroutine - ret or ret cc
 				ins_ret(params)
