@@ -4,6 +4,7 @@
 # Assembler Instructions
 
 from gbsem_common import *
+from gbsem_gb_ins import *
 
 # Section, used to indicate address
 # Syntax: 'Section "name",HOME[$address]'
@@ -41,3 +42,32 @@ def asm_include(params):
 	file_name = params[0].strip('""')
 	printWarning("Include not supported yet - \"" + file_name + "\" not added",True)
 	return
+
+# check for macro instructions
+# inputs: instruction and parameters
+# outputs: 1 if valid macro found
+#          0 otherwise
+#lda: MACRO
+#    ld a, \2
+#    ld \1, a
+#ld0: MACRO
+#    xor a
+#    ld \1, a
+#djnz: MACRO
+#    dec b
+#    jr nz, \1
+def asm_macros(instruction,params):
+	if instruction == 'lda':
+		ins_ld(['a',params[1]],'ld')
+		ins_ld([params[0],'a'],'ld')
+		return 1
+	elif instruction == 'ld0':
+		ins_generic_r(0xa8,'xor',['a'])
+		ins_ld([params[0],'a'],'ld')
+		return 1
+	elif instruction == 'djnz':
+		ins_dec_inc(0x05,0x0b,'dec',['b'])
+		#jr nz, params[0]
+		return 1
+	else:
+		return 0

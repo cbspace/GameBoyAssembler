@@ -135,12 +135,12 @@ def labelValid(label_name):
 # return value is integer value of input string
 # returns -1 on error
 def processNumber(number,bits,show_invalid_error=True):
-	if number.isdecimal() == True:                 # Decimal number detected
+	if number.isdecimal() == True:                  # Decimal number detected
 		n = check_number_size(int(number),bits)
 		if n == -1:
 			printError("Number must not be larger than " + str(bits) + " bits (max " + str(2**(bits)-1) + ")")
 		return n
-	elif number[0] == '$' or number[-1] == 'h':   # Hex number detected
+	elif number[0] == '$' or number[-1] == 'h':     # Hex number detected
 		if number[0] == '$':
 			n = string_to_number(number[1:],16)
 		elif number[-1] == 'h':
@@ -150,7 +150,7 @@ def processNumber(number,bits,show_invalid_error=True):
 			if n == -1:
 				printError("Number must not be larger than " + str(bits) + " bits (max " + "#%0.2X" % (2**(bits)-1) + ")")
 		return n
-	elif number[0] == '#':                         # Binary number detected
+	elif number[0] == '#' or number[0] == '%':      # Binary number detected
 		# replace '.'s with zeros
 		binary_string = number[1:].replace('.','0')
 		n = string_to_number(binary_string,2)

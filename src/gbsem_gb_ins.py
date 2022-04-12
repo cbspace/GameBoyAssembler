@@ -44,10 +44,10 @@ def ins_generic_decn_incn(base_opcode,ins_name,params):
 # ldi (hl),a      - Put a into address (hl) and increment hl - 0x22
 # ld a,(hl-)      - SAME AS LDD A,(HL) - 0x3a
 # ld a,(hld)      - SAME AS LDD A,(HL) - 0x3a
-# ldd a,(hl)      - Put calue at address (hl) into a and decrement hl - 0x3a
+# ldd a,(hl)      - Put value at address (hl) into a and decrement hl - 0x3a
 # ld a,(hl+)      - SAME AS LDI (HL),A - 0x2a
 # ld a,(hli)      - SAME AS LDI (HL),A - 0x2a
-# ldi a,(hl)      - Put calue at address (hl) into a and increment hl - 0x2a
+# ldi a,(hl)      - Put value at address (hl) into a and increment hl - 0x2a
 # ld ($ff00+c),a  - Put A into address $FF00 + reg c - 0xe2
 # ld a,($ff00+c)  - Put value at $FF00 + reg c into A - 0xf2
 # ld sp,hl        - Put hl into stack pointer - 0xf9
@@ -95,14 +95,33 @@ def ins_ld(params,ins_name):
 		elif params[0] == '(hl)': # ld (hl),n w n=8bit Immediate
 			write_n(0x36,params[1])
 		elif params[0] in LIST_PARAM_REG_S: # ld n,nn
-			nn_int = processN(params[1],16)
-			if nn_int != -1:
-				write_nn(0x01 + 0x10 * LIST_PARAM_REG_S.index(params[0]),nn_int)
+			if ins_ldhl_spn(params) != 1:
+				nn_int = processN(params[1],16)
+				if nn_int != -1:
+					write_nn(0x01 + 0x10 * LIST_PARAM_REG_S.index(params[0]),nn_int)
 		elif params[0] in LIST_PARAM_LDN: # ld nn,n
 			write_n(0x06 + 0x08 * LIST_PARAM_LDN.index(params[0]),params[1])
+		elif params[0][0] == '(' and params[0][-1] == ')' and params[1] == 'sp':
+			nn = params[0].strip('()')
+			nn_int = processN(nn,16)
+			if nn != -1:
+				write_nn(0x08,nn_int)
+		else:
+			printError("Invalid use of instruction '" + ins_name + "' - invalid parameters")
 	else:
 		printError("Invalid use of instruction '" + ins_name + "' - only allowed 2 parameters")
 	return
+
+# check if instruction matches pattern for ld hl,sp+n
+# inputs: parameter list
+# return 1 on success or 0 on no match
+def ins_ldhl_spn(params):
+	if params[0] == 'hl' and len(params[1]) > 3:
+		if params[1][0:3] == 'sp+':
+			n = params[1][3:]
+			write_n(0xf8,n)
+			return 1
+	return 0
 
 # Test for simple ld commands and match to opcode
 # Returns -1 for no match and returns opcode for a match (8bit integer)
@@ -116,8 +135,37 @@ def ins_ld_match(params,ins_name):
 # ldh (n),a   - Put a into memory address $FF00 + n (8bit immediate) - 0xe0
 # ldh a,(n)   - Put address $FF00 + n (8bit immediate) into a - 0xf0
 def ins_ldh(params):
-	printError("ldh not implemented")
+	p0 = params[0]
+	p1 = params[1]
+	if len(params) == 2:
+		if p1 == 'a':
+			if ins_ldh_param(p0,0xe0) == -1:
+				printError("Invalid use of 'ldh' - invalid parameters")
+		elif p0 == 'a':
+			if ins_ldh_param(p1,0xf0) == -1:
+				printError("Invalid use of 'ldh' - invalid parameters")
+		else:
+			printError("Invalid use of 'ldh' - invalid parameters")
+	else:
+		printError("Invalid use of 'ldh' - expecting 2 parameters")
 	return
+	
+# process the '($ff00+n)' or (n) string
+# return 1 on success and -1 on error
+def ins_ldh_param(in_str,opcode):
+	if in_str[0] == '(' and in_str[-1] == ')':
+		s = in_str.strip('()')
+		if s.count('+') == 1 and len(s) > 6:
+			if s[0:6] == '$ff00+':
+				n = s[6:]
+				write_n(opcode,n)
+				return 1
+		else:
+			n_value = processN(s,8)
+			if n_value != -1:
+				writeIns([opcode,n_value])
+				return 1
+	return -1
 
 # ldhl sp,n   - Put sp + n effective address into hl (n=d8) - 0xf8
 def ins_ldhl(params):

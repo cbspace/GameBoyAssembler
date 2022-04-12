@@ -3,7 +3,7 @@
 # Gameboy Assembler Program
 
 # Constants
-CONST_VERSION = 0.31
+CONST_VERSION = 0.32
 
 import sys
 
@@ -165,9 +165,13 @@ else:
 				ins_ret(params)
 			case 'reti': # ret - Return from interrupt - 0xD9
 				writeIns([0xd9])
+			case 'xor': # xor a with result in a
+				ins_generic_r(0xa8,'xor',params)
 
 			case _:
-				printError("Invalid instruction '" + instruction + "'")
+				#check for macro instructions
+				if asm_macros(instruction,params) == 0:
+					printError("Invalid instruction '" + instruction + "'")
 
 	# Fill in the jump instructions with associated label addresses
 	fillJumps()
