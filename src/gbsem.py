@@ -3,7 +3,7 @@
 # Gameboy Assembler Program
 
 # Constants
-CONST_VERSION = 0.33
+CONST_VERSION = 0.34
 
 import sys
 
@@ -121,7 +121,7 @@ else:
 			case 'and': # and r with A
 				ins_generic_r(0xa0,'and',params)
 			case 'bit': # Test bit b in register r - bit b,r
-				ins_bit(params)
+				ins_bit_generic(0x40,'bit',params)
 			case 'call': # call
 				ins_call(params)
 			case 'ccf': # Complement Carry Flag
@@ -162,11 +162,17 @@ else:
 				ins_stack(0xc1,'pop',params)
 			case 'push': # Push to stack
 				ins_stack(0xc5,'push',params)
-			#case 'res': # Reset bit b in register r - res b,r
+			case 'res': # Reset bit b in register r - res b,r
+				ins_bit_generic(0xc0,'res',params)
 			case 'ret': # ret - Return from subroutine - ret or ret cc
 				ins_ret(params)
 			case 'reti': # ret - Return from interrupt - 0xD9
 				writeIns([0xd9])
+			case 'rla': # rla - Rotate A left through carry flag
+				writeIns([0x17])
+			case 'rlca': # rla - Rotate A left. Old bit 7 to carry flag
+				writeIns([0x07])
+
 			case 'xor': # xor a with result in a
 				ins_generic_r(0xa8,'xor',params)
 

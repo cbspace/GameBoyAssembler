@@ -213,19 +213,20 @@ def ins_add(params):
 		printError("Invalid use of instruction 'add a,n' - only allowed 2 parameters")
 	return
 
- # Test bit b in register r - bit b,r
-def ins_bit(params):
-	base_opcode = 0x40
+# generic function for:
+# Test bit b in register r - bit b,r
+# SET b,r
+def ins_bit_generic(base_opcode,ins_name,params):
 	if len(params) == 2 and len(params[0]) == 1 and params[0].isdigit():
 		b = int(params[0])
 		r = params[1]
 		if b <= 7:
 			if r in LIST_PARAM:
-				writeIns([0xcb,base_opcode + 0x08 * b + LIST_PARAM.index(r)])
+				writeIns([0xcb,base_opcode + LIST_PARAM.index(r),b])
 		else:
 			printError("Invalid bit number, must be 0 - 7")
 	else:
-		printError("Invalid use of instruction - bit b,r")
+		printError("Invalid use of instruction - '" + ins_name +"' b,r")
 	return
 
 # call
