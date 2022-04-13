@@ -17,7 +17,21 @@ def ins_generic_r(base_opcode,ins_name,params):
 		else: #number
 			write_n(base_opcode + 0x46,r)
 	else:
-		printError("Invalid use of instruction - " + ins_name + " r")
+		printError("Invalid use of instruction - " + ins_name + " r - expecting 1 parameter")
+	return
+
+# Instruction with r parameter (r=LIST_PARAM)
+# Opcode is 0xcb followed by base_opcode + reg index
+# Used by: RLC n, RL n, RRC n, RR n, SLA n, SRA n, SRL n, SWAP r
+def ins_generic_cb_r(base_opcode,ins_name,params):
+	if len(params) == 1:
+		r = params[0]
+		if r in LIST_PARAM:
+			writeIns([0xcb, base_opcode + LIST_PARAM.index(r)])
+		else: #error
+			printError("Invalid use of instruction - " + ins_name + " r - invalid parameter")
+	else:
+		printError("Invalid use of instruction - " + ins_name + " r - expecting 1 parameter")
 	return
 
 # Instructions inc r and dec r with r parameter (r=LIST_PARAM)
@@ -87,18 +101,16 @@ def ins_ld(params,ins_name):
 			else: #(nn)
 				if n[0] == '(' and n[-1] == ')':
 					n = n.strip('()')
-					n_int = processN(n,16)
-					if n != -1:
-						write_nn(0xea,n_int)
+					nn_int = processAddress(n,'ld')
+					write_nn(0xea,nn_int)
 				else: # no valid parameter
 					printError("Invalid use of instruction - ld n,a")
 		elif params[0] == '(hl)': # ld (hl),n w n=8bit Immediate
 			write_n(0x36,params[1])
 		elif params[0] in LIST_PARAM_REG_S: # ld n,nn
 			if ins_ldhl_spn(params) != 1:
-				nn_int = processN(params[1],16)
-				if nn_int != -1:
-					write_nn(0x01 + 0x10 * LIST_PARAM_REG_S.index(params[0]),nn_int)
+				nn_int = processAddress(params[1],'ld',params[0])
+				write_nn(LIST_LD_RS_OPCODE[LIST_PARAM_REG_S.index(params[0])],nn_int)
 		elif params[0] in LIST_PARAM_LDN: # ld nn,n
 			write_n(0x06 + 0x08 * LIST_PARAM_LDN.index(params[0]),params[1])
 		elif params[0][0] == '(' and params[0][-1] == ')' and params[1] == 'sp':
@@ -175,9 +187,9 @@ def ins_ldhl(params):
 		printError("Invalid use of instruction 'ldhl sp,n'")
 	return
 
- # adc - add n + carry flag to A
-def ins_adc(params):
-	base_opcode = 0x88
+# adc - add n + carry flag to A
+# sbc - subtract n + carry flag from A
+def ins_adc_sbc(base_opcode,ins_name,params):
 	if len(params) == 2 and params[0] =='a':
 		n = params[1]
 		if n in LIST_PARAM:
@@ -185,24 +197,18 @@ def ins_adc(params):
 		else: #number
 			write_n(base_opcode + 0x46,n)
 	else:
-		printError("Invalid use of instruction - ADC a,n")
+		printError("Invalid use of instruction - '" + ins_name + "' a,n - expecting 1 parameter")
 	return
 
 # add n to A
 def ins_add(params):
 	if len(params) == 2:
 		if params[0] =='a':
-			base_opcode = 0x80
-			n = params[1]
-			if n in LIST_PARAM:
-				writeIns([base_opcode + LIST_PARAM.index(n)])
-			else: #number
-				write_n(base_opcode + 0x46,n)
+			ins_generic_r(0x80,'add',[params[1]])
 		elif params[0] == 'hl':
-			base_opcode = 0x09
 			n = params[1]
 			if n in LIST_PARAM_REG_S:
-				writeIns([base_opcode + 0x10 * LIST_PARAM_REG_S.index(n)])
+				writeIns([0x09 + 0x10 * LIST_PARAM_REG_S.index(n)])
 			else: #error
 				printError("Register '" + params[1] + "' is invalid")
 		elif params[0] == 'sp':
@@ -214,8 +220,7 @@ def ins_add(params):
 	return
 
 # generic function for:
-# Test bit b in register r - bit b,r
-# SET b,r
+# BIT b,r , RES b,r , SET b,r , 
 def ins_bit_generic(base_opcode,ins_name,params):
 	if len(params) == 2 and len(params[0]) == 1 and params[0].isdigit():
 		b = int(params[0])
@@ -258,7 +263,10 @@ def ins_dec_inc(base_opcode_r,base_opcode_rr,ins_name,params):
 	return
 
 
-# jump
+# Jump
+# JP nn(unsigned d16)
+# JP cc(cc=nz,z,nc,c),nn(unsigned d16)
+# JP (hl)
 def ins_jp(params):
 	if len(params) == 1:
 		if params[0] == '(hl)':  # jp (HL) - Jump to address in HL register
@@ -274,6 +282,31 @@ def ins_jp(params):
 			write_nn(byte1, nn)
 		else:
 			printError("Jump condition is not valid (cc=nz,z,nc,c)")
+	else:
+		printError("Invalid use of 'jp' - expected 1 or 2 parameters")
+	return
+	
+# Jump Relative
+# JR n (signed d8)
+# JR cc(cc=nz,z,nc,c),n(signed d8)
+def ins_jr(params):
+	if len(params) == 1: # jr n (signed d8)
+		#n_value = params[0] # covert to signed
+		n_value = 0x00
+		writeIns([0x18,n_value]) # covert to signed
+	elif len(params) == 2: # jr cc(cc=nz,z,nc,c),n(signed d8)
+		cc = params[0]
+		if cc in LIST_CONDITIONS:
+			n = params[1] # covert to signed
+			byte1 = LIST_JR_OPCODE[LIST_CONDITIONS.index(cc)]
+			#n_value = processN(n,8) # covert to signed
+			n_value = 0x00
+			if n_value != -1:
+				writeIns([byte1,n_value])
+		else:
+			printError("Jump condition is not valid (cc=nz,z,nc,c)")
+	else:
+		printError("Invalid use of 'jr' - expected 1 or 2 parameters")
 	return
 
 # Write ROM data for instruction with nn parameter
@@ -323,4 +356,19 @@ def ins_stack(base_opcode,ins_name,params):
 			writeIns([byte1])
 	else:
 		printError("Invalid use of '"+ ins_name + " r' - expected 1 parameter")
+	return
+	
+# Push current address to stack and jp to address + n
+# n = $00,$08,$10,$18,$20,$28,$30,$38
+def ins_rst(params):
+	if len(params) == 1:
+		n_int = processN(params[0],8)
+		if n_int != -1:
+			if n_int in LIST_RST_VALUES:
+				byte1 = 0xc7 + 0x08 * LIST_RST_VALUES.index(n_int)
+				writeIns([byte1])
+			else:
+				printError("Invalid use of 'rst n' - invalid reset register value")
+	else:
+		printError("Invalid use of 'rst n' - expected 1 parameter")
 	return

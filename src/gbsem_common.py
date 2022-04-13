@@ -45,8 +45,12 @@ def writeIns(byte_array):
 	global address
 
 	for b in byte_array:
-		#Write to file
-		rom.append(b)
+		if isinstance(b,int):
+			#Write to file
+			rom.append(b)
+		else:
+			printError("Error writing byte '" + str(b) + "' - not integer")
+		
 		# Increment address counter
 		address += 1
 	return
@@ -248,6 +252,11 @@ def fillJumps():
 					byte1 = 0xc3
 				else:		# conditional jump
 					byte1 = LIST_JP_OPCODE[LIST_CONDITIONS.index(ins_param)]
+			elif ins_type == 'ld': 		# ld n,a - EA nn
+				if ins_param =='':
+					byte1 = 0xea
+				else:		# ld from LIST_PARAM_REG_S
+					byte1 = LIST_LD_RS_OPCODE[LIST_PARAM_REG_S.index(ins_param)]
 			elif ins_type == 'call':	# call nn - CD nn
 				if ins_param =='':
 					byte1 = 0xcd

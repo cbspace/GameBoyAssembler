@@ -3,16 +3,21 @@
 # Gameboy Assembler Program
 # Constants
 
+# Backlog
+# Add signed d8 ints
+
 # Conditions
 LIST_CONDITIONS = ['nz','z','nc','c']
 
-# JP and CALL Opcodes for Conditions
+# JP, JR and CALL Opcodes for Conditions
 LIST_JP_OPCODE = [0xc2,0xca,0xd2,0xda]
+LIST_JR_OPCODE = [0x20,0x28,0x30,0x38]
 LIST_CALL_OPCODE = [0xc4,0xcc,0xd4,0xdc]
 
 # Opcodes for Load Instructions
 LIST_LD_AN_OPCODE = [0x78,0x79,0x7a,0x7b,0x7c,0x7d,0x0a,0x1a,0x7e]
 LIST_LD_NA_OPCODE = [0x47,0x4f,0x57,0x5f,0x67,0x6f,0x02,0x12,0x77]
+LIST_LD_RS_OPCODE = [0x01,0x11,0x21,0x31]
 
 # Registers
 LIST_PARAM = ['b','c','d','e','h','l','(hl)','a']
@@ -21,6 +26,9 @@ LIST_PARAM_LDN = ['b','c','d','e','h','l']
 LIST_PARAM_REG_I = ['(bc)','(de)','(hl)']
 LIST_PARAM_REG_S = ['bc','de','hl','sp']
 LIST_PARAM_STACK = ['af','bc','de','hl']
+
+# Reset Vectors
+LIST_RST_VALUES = [0x00,0x08,0x10,0x18,0x20,0x28,0x30,0x38]
 
 # Simple Loads use list match
 LIST_LD = [
@@ -38,6 +46,8 @@ LIST_LD = [
 [['ldi','a','(hl)'],0x2a],
 [['ld','($ff00+c)','a'],0xe2],
 [['ld','a','($ff00+c)'],0xf2],
+[['ld','(c)','a'],0xe2],
+[['ld','a','(c)'],0xf2],
 [['ld','sp','hl'],0xf9],
 [['ld','b','b'],0x40],
 [['ld','b','c'],0x41],

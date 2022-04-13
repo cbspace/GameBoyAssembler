@@ -3,7 +3,7 @@
 # Gameboy Assembler Program
 
 # Constants
-CONST_VERSION = 0.34
+CONST_VERSION = 0.35
 
 import sys
 
@@ -115,7 +115,7 @@ else:
 			case 'nop': # No op
 				writeIns([0x00])
 			case 'adc': # add r + carry flag to A
-				ins_adc(params)
+				ins_adc_sbc(0x88,'adc',params)
 			case 'add': # add r to A
 				ins_add(params)
 			case 'and': # and r with A
@@ -144,6 +144,8 @@ else:
 				ins_dec_inc(0x04,0x03,'inc',params)
 			case 'jp': # Jump
 				ins_jp(params)
+			case 'jr': # Jump relative
+				ins_jr(params)
 			case 'ld': # Load
 				ins_ld(params,'ld')
 			case 'ldd': # Load and decrement
@@ -163,7 +165,7 @@ else:
 			case 'push': # Push to stack
 				ins_stack(0xc5,'push',params)
 			case 'res': # Reset bit b in register r - res b,r
-				ins_bit_generic(0xc0,'res',params)
+				ins_bit_generic(0x80,'res',params)
 			case 'ret': # ret - Return from subroutine - ret or ret cc
 				ins_ret(params)
 			case 'reti': # ret - Return from interrupt - 0xD9
@@ -172,10 +174,40 @@ else:
 				writeIns([0x17])
 			case 'rlca': # rla - Rotate A left. Old bit 7 to carry flag
 				writeIns([0x07])
-
+			case 'rlc': # rlc - Rotate n left. Old bit 7 to carry flag
+				ins_generic_cb_r(0x00,'rlc',params)
+			case 'rl': # Rotate n left through Carry flag
+				ins_generic_cb_r(0x10,'rl',params)
+			case 'rra': # rra - Rotate A right through carry flag
+				writeIns([0x1f])
+			case 'rrca': # rrca - Rotate A right. Old bit 0 to carry flag
+				writeIns([0x0f])
+			case 'rrc': # rrc - Rotate n right. Old bit 0 to carry flag
+				ins_generic_cb_r(0x08,'rrc',params)
+			case 'rr': # Rotate n right through Carry flag
+				ins_generic_cb_r(0x18,'rr',params)
+			case 'rst': # Push current address to stack and jp to address + n
+				ins_rst(params)
+			case 'sbc': # subtract n + carry flag from A
+				ins_adc_sbc(0x98,'sbc',params)
+			case 'scf': # Set carry flag
+				writeIns([0x37])
+			case 'set': # Set bit b in register r - set b,r
+				ins_bit_generic(0xc0,'set',params)
+			case 'sla': # Shift n left into Carry. LSB of n set to 0.
+				ins_generic_cb_r(0x20,'sla',params)
+			case 'sra': # Shift n right into Carry - no change to MSB
+				ins_generic_cb_r(0x28,'sra',params)
+			case 'srl': # Shift n right into Carry - MSB set to 0
+				ins_generic_cb_r(0x38,'srl',params)
+			case 'stop': # Halt CPU and display until button press
+				writeIns([0x10,0x00])
+			case 'sub': # Subtract n from a
+				ins_generic_r(0x90,'sub',params)
+			case 'swap': # Swap upper and lower nibbles of n
+				ins_generic_cb_r(0x30,'swap',params)
 			case 'xor': # xor a with result in a
 				ins_generic_r(0xa8,'xor',params)
-
 			case _:
 				#check for macro instructions
 				if asm_macros(instruction,params) == 0:
