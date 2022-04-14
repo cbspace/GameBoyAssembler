@@ -3,9 +3,6 @@
 # Gameboy Assembler Program
 # Constants
 
-# Backlog
-# Add signed d8 ints
-
 # Conditions
 LIST_CONDITIONS = ['nz','z','nc','c']
 
@@ -25,7 +22,7 @@ LIST_PARAM_LDA = ['b','c','d','e','h','l','(bc)','(de)','(hl)']
 LIST_PARAM_LDN = ['b','c','d','e','h','l']
 LIST_PARAM_REG_I = ['(bc)','(de)','(hl)']
 LIST_PARAM_REG_S = ['bc','de','hl','sp']
-LIST_PARAM_STACK = ['af','bc','de','hl']
+LIST_PARAM_STACK = ['bc','de','hl','af']
 
 # Reset Vectors
 LIST_RST_VALUES = [0x00,0x08,0x10,0x18,0x20,0x28,0x30,0x38]

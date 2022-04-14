@@ -18,15 +18,25 @@ address = 0x00
 # Count number of errors
 error_count = 0
 
+# Dictionary used to store assembler constants (equ/= definitions)
+assembler_constants = {}
+
 # Dictionary used to store label names and addresses
+# {'label_name',address}
 labels = {}
 
 # List of all instructions which use labels
-# Structure: ('id,('address_hex_nnn','label_name','instruction_type'))
+# Structure:
+# (address_hex_nn,'label_name','instruction_type','instruction_param')
 jump_table = []
 
-# Dictionary used to store assembler constants (equ/= definitions)
-assembler_constants = {}
+# Dot labels are local labels found between labels (eg '.loop')
+# Structure:  ('dot_label_name',dot_label_address)
+dot_labels = {}
+
+# List of all jr instructions which use dot labels
+# Structure: (address_hex_nn,'dot_label_name','instruction_param')
+jr_table = []
 
 # ----------------------- Common Functions --------------------------
 
@@ -114,6 +124,57 @@ def defineLabel(label_name):
 		printError("Invalid label name, cannot begin with a number or contain invaid characters")
 	return
 
+# Function to validate and define a dot label
+def defineDotLabel(label_name):
+	# Check if the label name is valid
+	# Must contain only alphanumic chars, _ and -
+	# Cannot begin with number
+	if labelValid(label_name) == True:
+		if label_name in dot_labels: # Check if dot label aready exists
+			printError(".label '" + label_name + "' already exists!")
+		else: # Add new label to label dictionary
+			dot_labels[label_name] = address
+	else:
+		printError("Invalid .label name, cannot begin with a number or contain invaid characters")
+	return
+
+# fill in the address byte for jr instructions
+def fillJrIns():
+	global dot_labels
+	global jr_table
+	
+	# Loop through all entries in jr_table
+	for entry in jr_table:
+		# Get data from array
+		addr = entry[0]
+		label_name = entry[1]
+		ins_param = entry[2]
+
+		# Search label dictionary for current label
+		if label_name in dot_labels:
+			label_addr = dot_labels.get(label_name)
+			
+			# Fill in rom with instruction + label address
+			if ins_param =='':
+				byte1 = 0x18
+			else:		# conditional jump
+				byte1 = LIST_JR_OPCODE[LIST_CONDITIONS.index(ins_param)]
+
+			# Write data to rom
+			addr_delta = label_addr - addr # need to validate ###
+			byte2 = addr_delta
+
+			rom[addr] = byte1
+			rom[addr+1] = byte2
+	
+		else:
+			printError(".label '" + label_name + "' used but not defined", False)
+	
+	# Clear the label dictionary and jr table
+	dot_labels.clear()
+	jr_table.clear()
+	return
+
 # Function to validate label
 # Return True if valid name, false otherwise
 # also used to validate constant definitions
@@ -172,18 +233,18 @@ def processNumber(number,bits,show_invalid_error=True):
 #       - bits(int): Int size measured in bits
 # output - Constant value or number value
 def processN(n_string,bits):
-		# Search constant dictionary for string
-		if n_string in assembler_constants:
-			n = check_number_size(assembler_constants.get(n_string),bits)
-			if n == -1:
-				printError("Number must not be larger than " + str(bits) + " bits (max " + str(2**(bits)-1) + ")")
-			return n
-		else:	# No constant found so look for number
-			check_number = processNumber(n_string, bits, False)
-			if check_number == -1:
-				printError("Invalid number or constant \'" + n_string + "\'")
-			return check_number
-
+	# Search constant dictionary for string
+	if n_string in assembler_constants:
+		n = check_number_size(assembler_constants.get(n_string),bits)
+		if n == -1:
+			printError("Number must not be larger than " + str(bits) + " bits (max " + str(2**(bits)-1) + ")")
+		return n
+	else:	# No constant found so look for number
+		check_number = processNumber(n_string, bits, False)
+		if check_number == -1:
+			printError("Invalid number or constant \'" + n_string + "\'")
+		return check_number
+		
 # Input - n(int): Number to test
 #       - bits(int): Int size measured in bits
 # output - The input n if in bouds or -1 if number too large
@@ -192,6 +253,24 @@ def check_number_size(n,bits):
 		return int(n)
 	else:
 		return -1
+
+# Process 8 bit signed integer. Input could also be a label
+# for labels, relative address is calculated
+# valid integer is -128 to 127
+# Return the validated integer as signed byte or
+# return -1000 on error
+def processN_signed(n_string):
+	# Search constant dictionary for string
+	if n_string in assembler_constants:
+		n = assembler_constants.get(n_string),8
+		if n < -128 or n > 127:
+			printError("Signed number must not be larger than 127 or less than -128")
+		return -1000
+	else:	# No constant found so look for number
+		check_number = processNumber(n_string, bits, False)
+		if check_number == -1:
+			printError("Invalid number or constant \'" + n_string + "\'")
+		return check_number
 
 # Input - n_string(str): Number to convert
 #       - base(int): Hex(16), decimal(10) or binary(2)
@@ -229,6 +308,26 @@ def processAddress(address_string, instruction_type, instruction_param=''):
 			return check_number
 		else:                 # No valid number found
 			return -1
+			
+# Check for valid address string or dot label
+# when a dot label is found create jr_table entry
+# return values:
+# return 0 when address is a label
+# return -1000 on error
+def processAddressRelative(address_string,instruction_param=''):
+	# We need to know the current address
+	global address
+
+	if labelValid(address_string) == True:
+		# A valid label name is found so store in jump table
+		table_entry = []
+		table_entry.append(address)
+		table_entry.append(address_string) # label name
+		table_entry.append(instruction_param)
+		jr_table.append(table_entry)
+		return 0
+	else:    # No valid number found               
+		return -1000
 
 # Fill in all the jump statements that utilise labels
 def fillJumps():
@@ -308,8 +407,13 @@ def finalise_rom(filename_out):
 
 		# Write to file
 		for x in range(0,len(rom)):
-			outfile.write(bytes([rom[x]]))
-
+			int_val = rom[x]
+			if int_val < 0:
+				b = int_val.to_bytes(1,'big',signed=True)
+			else:
+				b = int_val.to_bytes(1,'big',signed=False)
+			outfile.write(b)
+			#outfile.write(bytes([rom[x]]))
 		# Close outfile
 		outfile.close()
 

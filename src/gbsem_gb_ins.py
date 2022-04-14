@@ -227,7 +227,7 @@ def ins_bit_generic(base_opcode,ins_name,params):
 		r = params[1]
 		if b <= 7:
 			if r in LIST_PARAM:
-				writeIns([0xcb,base_opcode + LIST_PARAM.index(r),b])
+				writeIns([0xcb,base_opcode + 0x08 * b + LIST_PARAM.index(r)])
 		else:
 			printError("Invalid bit number, must be 0 - 7")
 	else:
@@ -291,18 +291,28 @@ def ins_jp(params):
 # JR cc(cc=nz,z,nc,c),n(signed d8)
 def ins_jr(params):
 	if len(params) == 1: # jr n (signed d8)
-		#n_value = params[0] # covert to signed
-		n_value = 0x00
-		writeIns([0x18,n_value]) # covert to signed
+		if params[0][0] == '.': # dot label
+			n_value = processAddressRelative(params[0].split('.')[1])
+			if n_value == -1000: # Error
+				printError("Invalid .label")
+			elif n_value == 0: # Label is found so leave instruction blank
+				writeIns([0x00, 0x00])
+		else: # label or number ###
+			writeIns([0x18,0x00])
 	elif len(params) == 2: # jr cc(cc=nz,z,nc,c),n(signed d8)
 		cc = params[0]
 		if cc in LIST_CONDITIONS:
-			n = params[1] # covert to signed
-			byte1 = LIST_JR_OPCODE[LIST_CONDITIONS.index(cc)]
-			#n_value = processN(n,8) # covert to signed
-			n_value = 0x00
-			if n_value != -1:
-				writeIns([byte1,n_value])
+			if params[1][0] == '.': # dot label
+				n_value = processAddressRelative(params[1].split('.')[1],cc)
+				if n_value == -1000: # Error
+					printError("Invalid .label")
+				elif n_value == 0: # Label is found so leave instruction blank
+					writeIns([0x00, 0x00])
+			else: # label or number ###
+				#n = processAddress(params[1],'jr',cc)
+				#byte1 = LIST_JP_OPCODE[LIST_CONDITIONS.index(cc)]
+				#write_nn(byte1, nn)
+				writeIns([0x00,0x00])
 		else:
 			printError("Jump condition is not valid (cc=nz,z,nc,c)")
 	else:
@@ -352,7 +362,7 @@ def ins_stack(base_opcode,ins_name,params):
 	if len(params) == 1:
 		r = params[0]
 		if r in LIST_PARAM_STACK:
-			byte1 = base_opcode + LIST_PARAM_STACK.index(r)
+			byte1 = base_opcode + 0x10 * LIST_PARAM_STACK.index(r)
 			writeIns([byte1])
 	else:
 		printError("Invalid use of '"+ ins_name + " r' - expected 1 parameter")

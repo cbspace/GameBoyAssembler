@@ -3,7 +3,7 @@
 # Gameboy Assembler Program
 
 # Constants
-CONST_VERSION = 0.35
+CONST_VERSION = 0.36
 
 import sys
 
@@ -62,19 +62,33 @@ else:
 		# Replace tabs with spaces to simplify parsing
 		data = data.replace('\t',' ')
 		
-		# Look for label delimiter
-		label_count = data.count(':')
-		
-		# If a lablel is found process it then move on to next line
-		if label_count > 1:
-			printError("Invalid label definition (':' can only occur once per line)")
-		elif label_count == 1:
-			defineLabel(data.split(':')[0])
-			continue
-		
 		# Look for constants defined using 'EQU' or '='
 		const_check = checkForConstant(data)
 		if const_check == 1 or const_check == -1:
+			continue
+		
+		# Look for label delimiter
+		label_count = data.count(':')
+		
+		# If a lablel is found process it then process remainder of the line
+		if label_count > 1:
+			printError("Invalid label definition (':' can only occur once per line)")
+		elif label_count == 1:
+			label_split = data.split(':')
+			defineLabel(label_split[0])
+			fillJrIns()
+			data = label_split[1].strip()
+			# If line is empty then move on
+			if len(data) == 0: continue
+			
+		# Look for 'dot labels' (eg .loop)
+		# need to fix conflict with .db and .dw instructions
+		if data[0] == '.' and data[0:3] != '.db' and data[0:3] != '.dw':
+			label_split = data.split('.')
+			if len(label_split) == 2:
+				defineDotLabel(label_split[1])
+			else:
+				printError(".label definition invalid")
 			continue
 		
 		#Separate instruction from parameters
@@ -213,6 +227,9 @@ else:
 				if asm_macros(instruction,params) == 0:
 					printError("Invalid instruction '" + instruction + "'")
 
+	# Fill in remaining jr instruction dot label addresses
+	fillJrIns()
+	
 	# Fill in the jump instructions with associated label addresses
 	fillJumps()
 

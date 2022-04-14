@@ -23,7 +23,8 @@ def asm_section(params):
 def asm_db(params):
 	# Loop through params as multiple words can be used on a single line
 	for b in params:
-		byte1 = processN(b,8)
+		int_str = b.replace("l","$") # replace l characters that appear in some disassemblies
+		byte1 = processN(int_str,8)
 		writeIns([byte1])
 	return
 
@@ -32,8 +33,8 @@ def asm_dw(params):
 	# Loop through params as multiple words can be used on a single line
 	for w in params:
 		int_str = w.replace("l","$") # replace l characters that appear in some disassemblies
-		byte1 = processN(int_str,16) >> 8
-		byte2 = processN(int_str,16) & 0xFF
+		byte1 = processN(int_str,16) & 0xFF
+		byte2 = processN(int_str,16) >> 8
 		writeIns([byte1, byte2])
 	return
 
