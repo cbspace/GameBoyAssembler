@@ -298,7 +298,13 @@ def ins_jr(params):
 			elif n_value == 0: # Label is found so leave instruction blank
 				writeIns([0x00, 0x00])
 		else: # label or number ###
-			writeIns([0x18,0x00])
+			n = processAddress(params[0],'jr')
+			if n == -1: # Error
+				printError("Invalid address or label")
+			elif n == -2: # Label is found so leave instruction blank
+				writeIns([0x00, 0x00])
+			else:          # Address is found so write the bytes
+				writeIns([0x18, n])
 	elif len(params) == 2: # jr cc(cc=nz,z,nc,c),n(signed d8)
 		cc = params[0]
 		if cc in LIST_CONDITIONS:
@@ -309,10 +315,14 @@ def ins_jr(params):
 				elif n_value == 0: # Label is found so leave instruction blank
 					writeIns([0x00, 0x00])
 			else: # label or number ###
-				#n = processAddress(params[1],'jr',cc)
-				#byte1 = LIST_JP_OPCODE[LIST_CONDITIONS.index(cc)]
-				#write_nn(byte1, nn)
-				writeIns([0x00,0x00])
+				n = processAddress(params[1],'jr',cc)
+				byte1 = LIST_JR_OPCODE[LIST_CONDITIONS.index(cc)]
+				if n == -1: # Error
+					printError("Invalid address or label")
+				elif n == -2: # Label is found so leave instruction blank
+					writeIns([0x00, 0x00])
+				else:          # Address is found so write the bytes
+					writeIns([byte1, n])
 		else:
 			printError("Jump condition is not valid (cc=nz,z,nc,c)")
 	else:
@@ -325,7 +335,7 @@ def ins_jr(params):
 def write_nn(byte1, nn):
 	if nn == -1: # Error
 		printError("Invalid address or label")
-	elif nn == 0: # Label is found so leave instruction blank
+	elif nn == -2: # Label is found so leave instruction blank
 		writeIns([0x00, 0x00, 0x00])
 	else:          # Address is found so write the bytes
 		byte3 = nn >> 8

@@ -161,7 +161,7 @@ def fillJrIns():
 				byte1 = LIST_JR_OPCODE[LIST_CONDITIONS.index(ins_param)]
 
 			# Write data to rom
-			addr_delta = label_addr - addr # need to validate ###
+			addr_delta = label_addr - addr - 2 # need to validate ###
 			byte2 = addr_delta
 
 			rom[addr] = byte1
@@ -196,12 +196,13 @@ def labelValid(label_name):
 # Input - number(str): String that is a hex, binary or decimal integer
 #       - bits (int): size of integer in bits
 #       - show_invalid_error(boolean): Print error message when True
+#       - signed_int(boolean): Signed = True for signed integer
 # Hex numbers begin with $, binary begins with # and decimal is digits only
 # return value is integer value of input string
 # returns -1 on error
-def processNumber(number,bits,show_invalid_error=True):
+def processNumber(number,bits,show_invalid_error=True,signed_int=False):
 	if number.isdecimal() == True:                  # Decimal number detected
-		n = check_number_size(int(number),bits)
+		n = check_number_size(int(number),bits,signed_int)
 		if n == -1:
 			printError("Number must not be larger than " + str(bits) + " bits (max " + str(2**(bits)-1) + ")")
 		return n
@@ -211,7 +212,7 @@ def processNumber(number,bits,show_invalid_error=True):
 		elif number[-1] == 'h':
 			n = string_to_number(number[:-1],16)
 		if n != -1:
-			n = check_number_size(n,bits)
+			n = check_number_size(n,bits,signed_int)
 			if n == -1:
 				printError("Number must not be larger than " + str(bits) + " bits (max " + "#%0.2X" % (2**(bits)-1) + ")")
 		return n
@@ -220,7 +221,7 @@ def processNumber(number,bits,show_invalid_error=True):
 		binary_string = number[1:].replace('.','0')
 		n = string_to_number(binary_string,2)
 		if n != -1:
-			n = check_number_size(n,bits)
+			n = check_number_size(n,bits,signed_int)
 			if n == -1:
 				printError("Number must not be larger than " + str(bits) + " bits")
 		return n
@@ -231,28 +232,37 @@ def processNumber(number,bits,show_invalid_error=True):
 
 # Input - n_string(string): Can be either constant name or a number
 #       - bits(int): Int size measured in bits
+#       - signed_int(boolean): Signed = True for signed integer
 # output - Constant value or number value
-def processN(n_string,bits):
+def processN(n_string,bits,signed_int=False):
 	# Search constant dictionary for string
 	if n_string in assembler_constants:
-		n = check_number_size(assembler_constants.get(n_string),bits)
+		n = check_number_size(assembler_constants.get(n_string),bits,signed_int)
 		if n == -1:
-			printError("Number must not be larger than " + str(bits) + " bits (max " + str(2**(bits)-1) + ")")
+			printError("Number must not be larger than " + str(bits) + " bits (max " + str(2**(bits)-1) + ") or less than " + str(-2**(bits)/2))
 		return n
 	else:	# No constant found so look for number
-		check_number = processNumber(n_string, bits, False)
+		check_number = processNumber(n_string, bits, False, signed_int)
 		if check_number == -1:
 			printError("Invalid number or constant \'" + n_string + "\'")
 		return check_number
 		
 # Input - n(int): Number to test
 #       - bits(int): Int size measured in bits
+#       - signed_int(boolean): Signed = True for signed integer
 # output - The input n if in bouds or -1 if number too large
-def check_number_size(n,bits):
-	if int(n) < 2**(bits):
-		return int(n)
-	else:
-		return -1
+def check_number_size(n,bits,signed_int=False):
+	print
+	if signed_int == False:
+		if int(n) < 2**(bits):
+			return int(n)
+		else:
+			return -1
+	else: # signed int
+		if (int(n) < int(2**(bits))) and (int(n) > int(-2**(bits)/2)):
+			return int(n)
+		else:
+			return -1
 
 # Process 8 bit signed integer. Input could also be a label
 # for labels, relative address is calculated
@@ -287,7 +297,7 @@ def string_to_number(n_string,base):
 # when a label is found create jump table entry
 # return values:
 # for a valid address return the address
-# return 0 when address is a label
+# return -2 when address is a label
 # return -1 on error
 def processAddress(address_string, instruction_type, instruction_param=''):
 	# We need to know the current address
@@ -301,7 +311,7 @@ def processAddress(address_string, instruction_type, instruction_param=''):
 		table_entry.append(instruction_type)
 		table_entry.append(instruction_param)
 		jump_table.append(table_entry)
-		return 0
+		return -2
 	else:
 		check_number = processNumber(address_string, 16)
 		if check_number >= 0: # Valid number is found
@@ -344,32 +354,42 @@ def fillJumps():
 		# Search label dictionary for current label
 		if label_name in labels:
 			label_addr = labels.get(label_name)
-
-			# Fill in rom with instruction + label address
-			if ins_type == 'jp': 		# jp nn - C3 nn
+			
+			if ins_type == 'jr': 		# jr nn - 18 nn
 				if ins_param =='':
-					byte1 = 0xc3
-				else:		# conditional jump
-					byte1 = LIST_JP_OPCODE[LIST_CONDITIONS.index(ins_param)]
-			elif ins_type == 'ld': 		# ld n,a - EA nn
-				if ins_param =='':
-					byte1 = 0xea
-				else:		# ld from LIST_PARAM_REG_S
-					byte1 = LIST_LD_RS_OPCODE[LIST_PARAM_REG_S.index(ins_param)]
-			elif ins_type == 'call':	# call nn - CD nn
-				if ins_param =='':
-					byte1 = 0xcd
-				else:		# conditional call
-					byte1 = LIST_CALL_OPCODE[LIST_CONDITIONS.index(ins_param)]
+					byte1 = 0x18
+				else:		# conditional jr
+					byte1 = LIST_JR_OPCODE[LIST_CONDITIONS.index(ins_param)]
+				# Write data to rom
+				byte2 = label_addr - addr - 2 # need to validate ###
+				rom[addr] = byte1
+				rom[addr+1] = byte2
 			else:
-				printError('Invalid instruction found in jump table \'' + ins_type + '\'')
+				# Fill in rom with instruction + label address
+				if ins_type == 'jp': 		# jp nn - C3 nn
+					if ins_param =='':
+						byte1 = 0xc3
+					else:		# conditional jump
+						byte1 = LIST_JP_OPCODE[LIST_CONDITIONS.index(ins_param)]
+				elif ins_type == 'ld': 		# ld n,a - EA nn
+					if ins_param =='':
+						byte1 = 0xea
+					else:		# ld from LIST_PARAM_REG_S
+						byte1 = LIST_LD_RS_OPCODE[LIST_PARAM_REG_S.index(ins_param)]
+				elif ins_type == 'call':	# call nn - CD nn
+					if ins_param =='':
+						byte1 = 0xcd
+					else:		# conditional call
+						byte1 = LIST_CALL_OPCODE[LIST_CONDITIONS.index(ins_param)]
+				else:
+					printError('Invalid instruction found in jump table \'' + ins_type + '\'')
 
-			# Write data to rom
-			byte2 = label_addr & 0xFF
-			byte3 = label_addr >> 8
-			rom[addr] = byte1
-			rom[addr+1] = byte2
-			rom[addr+2] = byte3
+				# Write data to rom
+				byte2 = label_addr & 0xFF
+				byte3 = label_addr >> 8
+				rom[addr] = byte1
+				rom[addr+1] = byte2
+				rom[addr+2] = byte3
 		else:
 			printError("Label '" + label_name + "' used but not defined", False)
 
