@@ -89,7 +89,7 @@ def ins_ld(params,ins_name):
 				else: #(nn)
 					if n[0] == '(' and n[-1] == ')':
 						n = n.strip('()')
-						n_int = processN(n,16)
+						n_int = processSymbol(n,16)
 						if n_int != -1:
 							write_nn(0xfa,n_int)
 					else: # 8bit immediate
@@ -115,7 +115,7 @@ def ins_ld(params,ins_name):
 			write_n(0x06 + 0x08 * LIST_PARAM_LDN.index(params[0]),params[1])
 		elif params[0][0] == '(' and params[0][-1] == ')' and params[1] == 'sp':
 			nn = params[0].strip('()')
-			nn_int = processN(nn,16)
+			nn_int = processSymbol(nn,16)
 			if nn != -1:
 				write_nn(0x08,nn_int)
 		else:
@@ -173,7 +173,7 @@ def ins_ldh_param(in_str,opcode):
 				write_n(opcode,n)
 				return 1
 		else:
-			n_value = processN(s,8)
+			n_value = processSymbol(s,8)
 			if n_value != -1:
 				writeIns([opcode,n_value])
 				return 1
@@ -347,7 +347,7 @@ def write_nn(byte1, nn):
 # Input: byte1 - the first byte (opcode)
 #            n - The processed integer
 def write_n(byte1, n):
-	n_value = processN(n,8)
+	n_value = processSymbol(n,8)
 	if n_value != -1:
 		writeIns([byte1,n_value])
 	return
@@ -382,7 +382,7 @@ def ins_stack(base_opcode,ins_name,params):
 # n = $00,$08,$10,$18,$20,$28,$30,$38
 def ins_rst(params):
 	if len(params) == 1:
-		n_int = processN(params[0],8)
+		n_int = processSymbol(params[0],8)
 		if n_int != -1:
 			if n_int in LIST_RST_VALUES:
 				byte1 = 0xc7 + 0x08 * LIST_RST_VALUES.index(n_int)

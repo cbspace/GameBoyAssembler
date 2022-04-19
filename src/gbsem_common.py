@@ -234,7 +234,7 @@ def processNumber(number,bits,show_invalid_error=True,signed_int=False):
 #       - bits(int): Int size measured in bits
 #       - signed_int(boolean): Signed = True for signed integer
 # output - Constant value or number value
-def processN(n_string,bits,signed_int=False):
+def processSymbol(n_string,bits,signed_int=False):
 	# Search constant dictionary for string
 	if n_string in assembler_constants:
 		n = check_number_size(assembler_constants.get(n_string),bits,signed_int)
@@ -277,7 +277,7 @@ def processN_signed(n_string):
 			printError("Signed number must not be larger than 127 or less than -128")
 		return -1000
 	else:	# No constant found so look for number
-		check_number = processNumber(n_string, bits, False)
+		check_number = processNumber(n_string, 8, False, True)
 		if check_number == -1:
 			printError("Invalid number or constant \'" + n_string + "\'")
 		return check_number
@@ -433,7 +433,7 @@ def finalise_rom(filename_out):
 			else:
 				b = int_val.to_bytes(1,'big',signed=False)
 			outfile.write(b)
-			#outfile.write(bytes([rom[x]]))
+
 		# Close outfile
 		outfile.close()
 

@@ -24,7 +24,7 @@ def asm_db(params):
 	# Loop through params as multiple words can be used on a single line
 	for b in params:
 		int_str = b.replace("l","$") # replace label name with address for disassemblies
-		byte1 = processN(int_str,8,True)
+		byte1 = processSymbol(int_str,8,True)
 		writeIns([byte1])
 	return
 
@@ -33,8 +33,8 @@ def asm_dw(params):
 	# Loop through params as multiple words can be used on a single line
 	for w in params:
 		int_str = w.replace("l","$") # replace label name with address for disassemblies
-		byte1 = processN(int_str,16,True) & 0xFF
-		byte2 = processN(int_str,16,True) >> 8
+		byte1 = processSymbol(int_str,16,True) & 0xFF
+		byte2 = processSymbol(int_str,16,True) >> 8
 		writeIns([byte1, byte2])
 	return
 
