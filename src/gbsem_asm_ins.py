@@ -11,7 +11,7 @@ from gbsem_gb_ins import *
 def asm_section(params):
 	section_addr_str = params[1]
 	if section_addr_str[0:4] == 'home':
-		s_addr = processNumber(section_addr_str[4:].strip('()'),16)
+		s_addr = processSymbol(section_addr_str[4:].strip('()'),16)
 		if s_addr >= get_address():
 			for i in range(get_address(), s_addr):
 				writeIns([0xff])
