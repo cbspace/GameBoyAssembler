@@ -101,7 +101,9 @@ def ins_ld(params,ins_name):
 			else: #(nn)
 				if n[0] == '(' and n[-1] == ')':
 					n = n.strip('()')
-					nn_int = processAddress(n,'ld')
+					nn_int = processSymbol(n,16,False,False)
+					if nn_int == -1:
+						nn_int = processAddress(n,'ld')
 					write_nn(0xea,nn_int)
 				else: # no valid parameter
 					printError("Invalid use of instruction - ld n,a")
@@ -109,7 +111,9 @@ def ins_ld(params,ins_name):
 			write_n(0x36,params[1])
 		elif params[0] in LIST_PARAM_REG_S: # ld n,nn
 			if ins_ldhl_spn(params) != 1:
-				nn_int = processAddress(params[1],'ld',params[0])
+				nn_int = processSymbol(params[1],16,False,False)
+				if nn_int == -1:
+					nn_int = processAddress(params[1],'ld',params[0])
 				write_nn(LIST_LD_RS_OPCODE[LIST_PARAM_REG_S.index(params[0])],nn_int)
 		elif params[0] in LIST_PARAM_LDN: # ld nn,n
 			write_n(0x06 + 0x08 * LIST_PARAM_LDN.index(params[0]),params[1])

@@ -3,7 +3,7 @@
 # Gameboy Assembler Program
 
 # Constants
-CONST_VERSION = 0.39
+CONST_VERSION = "0.40"
 
 import sys
 
@@ -15,7 +15,7 @@ from gbsem_gb_ins import *
 # ------------------------- Program Start -----------------------------
 
 # Display Welcome Message
-print("    Gameboy Assembler V" + str(CONST_VERSION))
+print("    Gameboy Assembler V" + CONST_VERSION)
 
 # Check the command line arguments
 if not (2 <= len(sys.argv) <= 3):

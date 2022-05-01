@@ -234,7 +234,8 @@ def processNumber(number,bits,show_invalid_error=True,signed_int=False):
 #       - bits(int): Int size measured in bits
 #       - signed_int(boolean): Signed = True for signed integer
 # output - Constant value or number value
-def processSymbol(n_string,bits,signed_int=False):
+# issue: need to change return value on error due to signed interger support
+def processSymbol(n_string,bits,signed_int=False,show_error=True):
 	# Search constant dictionary for string
 	if n_string in assembler_constants:
 		n = check_number_size(assembler_constants.get(n_string),bits,signed_int)
@@ -243,7 +244,7 @@ def processSymbol(n_string,bits,signed_int=False):
 		return n
 	else:	# No constant found so look for number
 		check_number = processNumber(n_string, bits, False, signed_int)
-		if check_number == -1:
+		if check_number == -1 and show_error == True:
 			printError("Invalid number or constant \'" + n_string + "\'")
 		return check_number
 		
