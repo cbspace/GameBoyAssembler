@@ -2,7 +2,6 @@
 ; Used to test the gbsem assembler
 ;
 ; Display the message on the screen using background tiles.
-; Then clear the screen and display the message again using sprites.
 
 ; Constants - Addresses
 A_TDT1    =  $8000      ; Tile Data Table 1 start address (Sprite, BG, Window: 0->255)
@@ -87,8 +86,8 @@ start:
 	ld  hl , A_BGTM1     ; Use BGTM1 start address
 	call zero_data       ; Set the Tile Map data to zero (blank tiles)
 	ld  bc , $40         ; 64 bytes of data to copy
-	ld  hl , $99e0       ; A_BGTM1 + $1e0
-	ld  de , bgtm_data   ; Tile Map data containing the text
+	ld  de , $9900       ; A_BGTM1 + $100
+	ld  hl , bgtm_data   ; Tile Map data containing the text
 	call copy_data       ; Copy text data
 	
 	call init_registers  ; Initialise display registers and start LCD
@@ -159,16 +158,16 @@ dma_transfer:
 	ret
 	
 
-; Background Tile Map Data (32x32)
+; Background Tile Map Data (32x32 bg, 20x18 screen)
 ; Middle 2 rows shown - h = 1, e = 2 etc
 bgtm_data:
-	db 0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,3,3,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-	db 0,0,0,0,0,0,0,0,0,0,0,0,5,4,6,3,7,8,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+	db 0,0,0,0,0,0,0,1,2,3,3,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+	db 0,0,0,0,0,0,0,5,4,6,3,7,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
 ; The below characters represent the outlines.
 ; Each byte is doubled to make the 1's 3's (darkest colour)
 char_blank:
-	dw 0,0,0,0,0,0,0,0
+	db 0,0,0,0,0,0,0,0
 
 char_h: 
 	db %.1.....1
@@ -248,16 +247,6 @@ char_bang:
 	db %.11.....
 	db %........
 	db %.11.....
-	db %........
-
-tile_bg: 
-	db %.111111.
-	db %.1.....1
-	db %.1.....1
-	db %.1.....1
-	db %.1.....1
-	db %.1.....1
-	db %.111111.
 	db %........
 
 ; End of 32kB Cartridge
