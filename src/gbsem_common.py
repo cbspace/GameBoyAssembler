@@ -403,9 +403,9 @@ def printError(error_text, show_line_number = True):
 
     # Print error message
     if show_line_number == True:
-        print("\tERROR on line " + str(line_number) + ": " + error_text)
+        print("    ERROR on line " + str(line_number) + ": " + error_text)
     else:
-        print("\tERROR: " + error_text)
+        print("    ERROR: " + error_text)
     return
 
 # Print warning message + line number
@@ -413,9 +413,9 @@ def printWarning(warning_text, show_line_number = True):
 
     # Print error message
     if show_line_number == True:
-        print("\tWARNING on line " + str(line_number) + ": " + warning_text)
+        print("    WARNING on line " + str(line_number) + ": " + warning_text)
     else:
-        print("\tWARNING: " + warning_text)
+        print("    WARNING: " + warning_text)
     return
 
 # Display errors or finalise the rom

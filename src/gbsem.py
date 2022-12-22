@@ -5,7 +5,7 @@
 # Constants
 CONST_VERSION = "0.40"
 
-import sys
+import sys, os
 
 from gbsem_constants import *
 from gbsem_common import *
@@ -15,17 +15,18 @@ from gbsem_gb_ins import *
 # ------------------------- Program Start -----------------------------
 
 # Display Welcome Message
-print("    Gameboy Assembler V" + CONST_VERSION)
+print("Gameboy Assembler V" + CONST_VERSION)
 
 # Check the command line arguments
 if not (2 <= len(sys.argv) <= 3):
-    print("\n\tAssembler Usage:")
-    print("\t\"gbsem.py SourceFilePath [RomFilePath]\"\n")
-    print("\tSourceFilePath: Gameboy source file, usually a .asm file extension")
-    print("\t [RomFilePath]: Optional parameter used to specify output ROM file name.")
-    print("\t                If omitted, the ROM file name is the input file name with .gb extension\n")
-    print("\te.g \"gbsem.py source/test.asm roms/test_rom.gb\"\n")
-else:
+    print("    Command Line Usage:")
+    print("    \"./gbsem.py SourceFilePath [RomFilePath]\"")
+    print("    SourceFilePath: Gameboy source file, usually a .asm file extension")
+    print("     [RomFilePath]: Optional parameter used to specify output ROM file name.")
+    print("                    If omitted, the ROM file name is the input file name with")
+    print("                    a .gb extension")
+    print("    e.g \"gbsem.py source/test.asm roms/test_rom.gb\"")
+elif os.path.exists(sys.argv[1]):
     # Store file names from command line
     filename_in = str(sys.argv[1])
     
@@ -33,7 +34,10 @@ else:
     if len(sys.argv) == 3:    # Out file name was provided
         filename_out = str(sys.argv[2])
     else:                     # Out file name not provided
-        if filename_in.find('.') > 0:
+        slash_pos = filename_in.rfind('/')
+        if slash_pos == -1:
+            slash_pos = 0
+        if filename_in.find('.', slash_pos + 1) > 0:
             filename_out = filename_in[:filename_in.rfind('.')] + '.gb'
         else:
             filename_out = filename_in + '.gb'
@@ -238,4 +242,5 @@ else:
 
     # Close infile
     infile.close()
-
+else:
+    printError("Input file: \"" + sys.argv[1] + "\" not found", False)
